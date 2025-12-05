@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "Al Quran- مُتَشَابِهَات ",
+    "slug": "QuranPakApp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./src/assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./src/assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./src/assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.madank.QuranPakApp"
+    },
+    "web": {
+      "favicon": "./src/assets/fav-icon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "4148adb3-25a3-4c93-aa58-b510d7412d58"
+      }
+    }
+  }
+}
