@@ -18,11 +18,16 @@ import {
   TapGestureHandler,
   NativeViewGestureHandler,
 } from 'react-native-gesture-handler';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  runOnJS,
+} from 'react-native-reanimated';
 import pageData from '../assets/pageData.json';
 import { useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated from 'react-native-reanimated';
+import { useAnimatedGestureHandler } from 'react-native-reanimated';
 
 const { width } = Dimensions.get('window');
 const IMAGE_WIDTH = width * 0.9;
@@ -2709,43 +2714,42 @@ const QuranViewer = () => {
     );
   };
 
-// ...existing code...
-const renderHighlightLine = (pageId, hl) => {
-  const hlKey = hl.id;
-  const position = highlightPositions[hlKey] || { x: 30, y: 150 };
+  const renderHighlightLine = (pageId, hl) => {
+    const hlKey = hl.id;
+    const position = highlightPositions[hlKey] || { x: 30, y: 150 };
+    const panResponder = PanResponder.create({
+      onStartShouldSetPanResponder: () => isEditingHighlight,
+      onPanResponderMove: (_, gesture) => {
+        setHighlightPositions((prev) => ({
+          ...prev,
+          [hlKey]: { x: position.x + gesture.dx, y: position.y + gesture.dy },
+        }));
+      },
+    });
 
-  return (
-    <View
-      key={`hl-${hlKey}`}
-      style={[
-        styles.highlight,
-        {
-          left: position.x,
-          top: position.y,
-          borderColor: 'yellow',
-          backgroundColor: 'yellow',
-          opacity: 0.5,
-          justifyContent: 'center',
-          alignItems: 'center',
-        },
-      ]}
-    >
+    const isActive =
+      activeHighlights.pageId === pageId && activeHighlights.highlightIds.includes(hl.id);
+
+    if (!isEditingHighlight && !isActive) return null;
+
+    return (
       <View
-        style={{
-          backgroundColor: 'rgba(255,255,255,0.95)',
-          paddingHorizontal: 8,
-          paddingVertical: 2,
-          borderRadius: 6,
-        }}
-      >
-        <Text style={{ color: 'black', fontWeight: 'bold', fontSize: 18, opacity: 1 }}>
-          {hl.id}
-        </Text>
-      </View>
-    </View>
-  );
-};
-// ...existing code...
+        key={`hl-${hlKey}`}
+        style={[
+          styles.highlight,
+          {
+            left: position.x,
+            top: position.y,
+            borderColor: isEditingHighlight ? 'red' : 'yellow',
+            backgroundColor: isActive ? 'yellow' : 'transparent',
+            opacity: isActive ? 0.4 : 0.2,
+           
+          },
+        ]}
+        {...(isEditingHighlight ? panResponder.panHandlers : {})}
+      />
+    );
+  };
 
   const renderBackButton = (currentPageId) =>
     prevPageId && currentPageId !== prevPageId ? (
