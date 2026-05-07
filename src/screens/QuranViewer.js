@@ -2630,7 +2630,7 @@ const QuranViewer = () => {
       setActiveHighlights({ pageId, highlightIds });
       setTimeout(() => {
         setActiveHighlights({ pageId: null, highlightIds: [] });
-      }, 4000);
+      }, 8000);
     }
   };
 
