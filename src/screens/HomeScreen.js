@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const LAST_PAGE_KEY = 'quran_last_page';
 
@@ -43,6 +44,14 @@ const HomeScreen = ({ navigation }) => {
     }, [checkedBookmark, navigation]);
 
     return (
+        <LinearGradient
+          colors={["#c4b9aa", "#a7a07d", "#a59747", "#978f1e", "#b1b36f"]}
+          
+          locations={[0, 0.25, 0.5, 0.75, 1]}
+          style={{ width: "100%", height: "100%" }}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+        >
         <View style={styles.mainContainer}>
             <View style={styles.header}>
                 <Text style={styles.heading}>Quran Pak</Text>
@@ -69,13 +78,13 @@ const HomeScreen = ({ navigation }) => {
                 </TouchableOpacity>
             </View>
         </View>
+        </LinearGradient>
     );
 };
 
 const styles = StyleSheet.create({
     mainContainer: {
         flex: 1,
-        backgroundColor: '#4d5661ff',
     },
     header: {
         paddingTop: 50,
