@@ -2778,7 +2778,7 @@ const QuranViewer = () => {
     
     <View style={{ height: ITEM_HEIGHT, alignItems: 'center' }}>
       <View style={{ width: IMAGE_WIDTH, height: IMAGE_HEIGHT }}>
-        {/* <ReactNativeZoomableView
+       <ReactNativeZoomableView
             maxZoom={1.5}
              minZoom={0.5}
             zoomStep={0.5}
@@ -2789,13 +2789,13 @@ const QuranViewer = () => {
               padding: 10,
               backgroundColor: 'red',
               }}
-> */}
+>
         <ImageViewer  source={item.source} style={styles.image} resizeMode="contain" />
         {boxList.map((box) => renderDraggableBox(pageId, box))}
         {highlightList.map((hl) => renderHighlightLine(pageId, hl))}
         {renderBackButton(pageId)}
       
-      {/* </ReactNativeZoomableView> */}
+       </ReactNativeZoomableView>
       </View>
     </View>
 
