@@ -2782,6 +2782,8 @@ const QuranViewer = () => {
           zoomStep={0.5}
           initialZoom={1}
           bindToBorders={true}
+          disablePanOnInitialZoom={true}
+
           pinchToZoomInSensitivity={3}
           pinchToZoomOutSensitivity={3}
           movementSensibility={1.5}
