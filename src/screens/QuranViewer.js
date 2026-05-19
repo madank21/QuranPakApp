@@ -27,8 +27,6 @@ import pageData from '../assets/pageData.json';
 import { useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { useAnimatedGestureHandler } from 'react-native-reanimated';
-import { ReactNativeZoomableView } from '@openspacelabs/react-native-zoomable-view';
 
 const { width } = Dimensions.get('window');
 const IMAGE_WIDTH = width * 0.9;
@@ -2589,6 +2587,7 @@ const QuranViewer = () => {
   const [searchInput, setSearchInput] = useState('');
   const flatListRef = useRef(null);
   const [isZoomed, setIsZoomed] = useState(false);
+  
 
   // --- State for boxes / highlights ---
   const [boxPositions, setBoxPositions] = useState({});
@@ -2596,6 +2595,39 @@ const QuranViewer = () => {
   const [isEditingBox, setIsEditingBox] = useState(false);
   const [isEditingHighlight, setIsEditingHighlight] = useState(false);
   const [prevPageId, setPrevPageId] = useState(null);
+
+  //for zooming
+  const scale = useSharedValue(1);
+const savedScale = useSharedValue(1);
+
+const translateX = useSharedValue(0);
+const translateY = useSharedValue(0);
+
+const savedX = useSharedValue(0);
+const savedY = useSharedValue(0);
+
+const pinchGesture = Gesture.Pinch()
+  .onUpdate((event) => {
+    const nextScale = savedScale.value * event.scale;
+
+    scale.value = Math.min(
+      Math.max(nextScale, 1),
+      3
+    );
+  })
+  .onEnd(() => {
+    savedScale.value = scale.value;
+  });
+
+
+
+  const animatedStyle = useAnimatedStyle(() => {
+  return {
+    transform: [
+      { scale: scale.value }
+    ],
+  };
+});
 
   // Active highlights (set when box is pressed)
   const [activeHighlights, setActiveHighlights] = useState({
@@ -2773,55 +2805,25 @@ const QuranViewer = () => {
   const highlightList = pageDataEntry.highlights || [];
 
   return (
+    
     <View style={{ height: ITEM_HEIGHT, alignItems: 'center' }}>
       <View style={{ width: IMAGE_WIDTH, height: IMAGE_HEIGHT }}>
-
-        <ReactNativeZoomableView
-          maxZoom={3}
-          minZoom={1}
-          zoomStep={0.5}
-          initialZoom={1}
-          bindToBorders={true}
-          disablePanOnInitialZoom={true}
-
-          pinchToZoomInSensitivity={3}
-          pinchToZoomOutSensitivity={3}
-          movementSensibility={1.5}
-          onZoomAfter={(event, gestureState, zoomableViewEventObject) => {
-            const zoomLevel = zoomableViewEventObject.zoomLevel;
-
-            if (zoomLevel > 1) {
-              setIsZoomed(true);
-            } else {
-              setIsZoomed(false);
-            }
-          }}
-          style={{
-            width: IMAGE_WIDTH,
-            height: IMAGE_HEIGHT,
-          }}
-        >
-
-          <Image
-            source={item.source}
-            style={styles.image}
-            resizeMode="contain"
-          />
-
-          {boxList.map((box) => renderDraggableBox(pageId, box))}
-
-          {highlightList.map((hl) =>
-            renderHighlightLine(pageId, hl)
-          )}
-
-          {renderBackButton(pageId)}
-
-        </ReactNativeZoomableView>
-
+       
+        <Image
+  source={item.source}
+  style={styles.image}
+  resizeMode="contain"
+/>
+        {boxList.map((box) => renderDraggableBox(pageId, box))}
+        {highlightList.map((hl) => renderHighlightLine(pageId, hl))}
+        {renderBackButton(pageId)}
+      
       </View>
     </View>
+
   );
 };
+
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -2843,21 +2845,33 @@ const QuranViewer = () => {
         </View>
       </View>
 
-      <FlatList
-        ref={flatListRef}
-        data={images}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id.toString()}
-        getItemLayout={(_, index) => ({ length: ITEM_HEIGHT, offset: ITEM_HEIGHT * index, index })}
-        initialNumToRender={5}
-        maxToRenderPerBatch={5}
-        windowSize={7}
-        scrollEventThrottle={16}
-        viewabilityConfig={{ itemVisiblePercentThreshold: 60 }}
-        onViewableItemsChanged={onViewableItemsChanged}
-        onMomentumScrollEnd={handleScrollEnd}
-        scrollEnabled={!isZoomed}
-      />
+      <GestureDetector gesture={pinchGesture}>
+  <Animated.View
+  collapsable={false}
+  style={[{ flex: 1 }, animatedStyle]}
+>
+    <FlatList
+      ref={flatListRef}
+      data={images}
+      renderItem={renderItem}
+      keyExtractor={(item) => item.id.toString()}
+      getItemLayout={(_, index) => ({
+        length: ITEM_HEIGHT,
+        offset: ITEM_HEIGHT * index,
+        index,
+      })}
+      initialNumToRender={5}
+      maxToRenderPerBatch={5}
+      windowSize={7}
+      scrollEventThrottle={16}
+      viewabilityConfig={{
+        itemVisiblePercentThreshold: 60,
+      }}
+      onViewableItemsChanged={onViewableItemsChanged}
+      onMomentumScrollEnd={handleScrollEnd}
+    />
+  </Animated.View>
+</GestureDetector>
     </GestureHandlerRootView>
   );
 };
