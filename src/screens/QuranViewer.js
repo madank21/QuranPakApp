@@ -28,9 +28,7 @@ import { useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useAnimatedGestureHandler } from 'react-native-reanimated';
-import ReactNativeZoomableView from '@dudigital/react-native-zoomable-view/src/ReactNativeZoomableView';
-import ImageViewer from 'react-native-image-zoom-viewer';
-
+import { ReactNativeZoomableView } from '@openspacelabs/react-native-zoomable-view';
 
 const { width } = Dimensions.get('window');
 const IMAGE_WIDTH = width * 0.9;
@@ -2775,30 +2773,51 @@ const QuranViewer = () => {
   const highlightList = pageDataEntry.highlights || [];
 
   return (
-    
     <View style={{ height: ITEM_HEIGHT, alignItems: 'center' }}>
       <View style={{ width: IMAGE_WIDTH, height: IMAGE_HEIGHT }}>
-       <ReactNativeZoomableView
-            maxZoom={1.5}
-             minZoom={0.5}
-            zoomStep={0.5}
-            initialZoom={1}
-            bindToBorders={true}
-            onZoomAfter={this.logOutZoomState}
-            style={{
-              padding: 10,
-              backgroundColor: 'red',
-              }}
->
-        <ImageViewer  source={item.source} style={styles.image} resizeMode="contain" />
-        {boxList.map((box) => renderDraggableBox(pageId, box))}
-        {highlightList.map((hl) => renderHighlightLine(pageId, hl))}
-        {renderBackButton(pageId)}
-      
-       </ReactNativeZoomableView>
+
+        <ReactNativeZoomableView
+          maxZoom={3}
+          minZoom={1}
+          zoomStep={0.5}
+          initialZoom={1}
+          bindToBorders={true}
+          pinchToZoomInSensitivity={3}
+          pinchToZoomOutSensitivity={3}
+          movementSensibility={1.5}
+          onZoomAfter={(event, gestureState, zoomableViewEventObject) => {
+            const zoomLevel = zoomableViewEventObject.zoomLevel;
+
+            if (zoomLevel > 1) {
+              setIsZoomed(true);
+            } else {
+              setIsZoomed(false);
+            }
+          }}
+          style={{
+            width: IMAGE_WIDTH,
+            height: IMAGE_HEIGHT,
+          }}
+        >
+
+          <Image
+            source={item.source}
+            style={styles.image}
+            resizeMode="contain"
+          />
+
+          {boxList.map((box) => renderDraggableBox(pageId, box))}
+
+          {highlightList.map((hl) =>
+            renderHighlightLine(pageId, hl)
+          )}
+
+          {renderBackButton(pageId)}
+
+        </ReactNativeZoomableView>
+
       </View>
     </View>
-
   );
 };
 

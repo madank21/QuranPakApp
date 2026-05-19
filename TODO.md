@@ -1,0 +1,7 @@
+- [ ] Inspect current QuranViewer zoom implementation
+- [ ] Remove ReactNativeZoomableView usage
+- [ ] Implement pinch-to-zoom with PinchGestureHandler + Reanimated (scale + limits)
+- [ ] Ensure overlays scale with the image (boxes/highlights/back)
+- [ ] Temporarily disable FlatList scrolling while pinching
+- [ ] Clean up unused imports
+- [ ] Test pinch zoom in/out and scrolling
