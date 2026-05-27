@@ -53,6 +53,8 @@ const ParaIndex = ({ navigation }) => {
       Alert.alert(`Para ${para.number}`, `${para.label} (${para.arabic})`);
     }
   };
+
+  
   return (
     <View style={styles.screen}>
       <View style={styles.screenHeader}>
@@ -63,7 +65,7 @@ const ParaIndex = ({ navigation }) => {
         <Text style={styles.headerTitle}>Para Index</Text>
 
         <Text style={styles.headerCount}>
-          {filtered.length} of 30 Paras
+          {paraList.length} of 30 Paras
         </Text>
       </View>
 
@@ -75,31 +77,29 @@ const ParaIndex = ({ navigation }) => {
             style={styles.searchInput}
             placeholder="Search para name or number…"
             placeholderTextColor="#8A8A9A"
-            value={query}
-            onChangeText={setQuery}
           />
         </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.listContainer}>
-        {filtered.map((p) => (
+        {paraList.map((para) => (
           <TouchableOpacity
-            key={p.n}
+            key={para.number}
             style={styles.indexCard}
           >
             <View style={styles.cardNum}>
-              <Text style={styles.cardNumText}>{p.n}</Text>
+              <Text style={styles.cardNumText}>{para.number}</Text>
             </View>
 
             <View style={styles.cardBody}>
-              <Text style={styles.cardEn}>{p.en}</Text>
+              <Text style={styles.cardEn}>{para.label}</Text>
 
               <Text style={styles.cardMeta}>
-                Para {p.n} of 30
+                Para {para.number} of 30
               </Text>
             </View>
 
-            <Text style={styles.cardAr}>{p.ar}</Text>
+            <Text style={styles.cardAr}>{para.arabic}</Text>
           </TouchableOpacity>
         ))}
       </ScrollView>
