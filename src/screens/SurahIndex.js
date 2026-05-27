@@ -8,7 +8,6 @@ import {
 } from 'react-native';
 
 import styles from '../styles/appStyles';
-import surahList from '../data/surahList';
 
 const surahList = [
   { number: 1, label: 'Al-Fatiha', arabic: 'الفاتحة', imageId: 2 },
@@ -127,7 +126,7 @@ const surahList = [
   { number: 114, label: 'An-Nas', arabic: 'الناس', imageId: 611 }
 ];
 
-const SurahIndexScreen = ({ navigation }) => {
+const SurahIndex = ({ navigation }) => {
 
   const handlePress = (surah) => {
     if (surah.imageId) {
@@ -152,7 +151,7 @@ const SurahIndexScreen = ({ navigation }) => {
         </Text>
       </View>
 
-      <View style={styles.searchWrap}>
+      {/* <View style={styles.searchWrap}>
         <View style={styles.searchWrapInner}>
           <Text style={styles.searchIcon}>🔍</Text>
 
@@ -162,7 +161,7 @@ const SurahIndexScreen = ({ navigation }) => {
             placeholderTextColor="#8A8A9A"
           />
         </View>
-      </View>
+      </View> */}
 
       <ScrollView contentContainerStyle={styles.listContainer}>
         {surahList.map((surah) => (
