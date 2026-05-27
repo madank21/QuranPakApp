@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
+import styles from '../styles/appStyles';
 
 const paraList = [
     { number: 1, label: 'Alif Lam Meem', arabic: 'الم' , imageId: 2 },
@@ -36,61 +37,67 @@ const paraList = [
 
 
 const ParaIndex = ({ navigation }) => {
-  const handlePress = (para) => {
-    if (para.imageId) {
-      navigation.navigate('QuranViewer', { imageId: para.imageId });
-    } else {
-      Alert.alert(`Para ${para.number}`, `${para.label} (${para.arabic})`);
-    }
-  };
+  const [query, setQuery] = useState('');
+
+  const filtered = paraList.filter(
+    (p) =>
+      p.en.toLowerCase().includes(query.toLowerCase()) ||
+      p.ar.includes(query) ||
+      String(p.n).includes(query)
+  );
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {paraList.map((para) => (
-        <TouchableOpacity
-          key={para.number}
-          style={styles.item}
-          onPress={() => handlePress(para)}
-        >
-          <Text style={styles.surahNumber}>Para {para.number}</Text>
-          <Text style={styles.label}>{para.label}</Text>
-          <Text style={styles.arabic}>{para.arabic}</Text>
+    <View style={styles.screen}>
+      <View style={styles.screenHeader}>
+        <TouchableOpacity onPress={() => navigation.navigate('Home')}>
+          <Text style={styles.headerBack}>‹ Back</Text>
         </TouchableOpacity>
-      ))}
-    </ScrollView>
+
+        <Text style={styles.headerTitle}>Para Index</Text>
+
+        <Text style={styles.headerCount}>
+          {filtered.length} of 30 Paras
+        </Text>
+      </View>
+
+      <View style={styles.searchWrap}>
+        <View style={styles.searchWrapInner}>
+          <Text style={styles.searchIcon}>🔍</Text>
+
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search para name or number…"
+            placeholderTextColor="#8A8A9A"
+            value={query}
+            onChangeText={setQuery}
+          />
+        </View>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.listContainer}>
+        {filtered.map((p) => (
+          <TouchableOpacity
+            key={p.n}
+            style={styles.indexCard}
+          >
+            <View style={styles.cardNum}>
+              <Text style={styles.cardNumText}>{p.n}</Text>
+            </View>
+
+            <View style={styles.cardBody}>
+              <Text style={styles.cardEn}>{p.en}</Text>
+
+              <Text style={styles.cardMeta}>
+                Para {p.n} of 30
+              </Text>
+            </View>
+
+            <Text style={styles.cardAr}>{p.ar}</Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    paddingVertical: 40,
-    paddingHorizontal: 20,
-    alignItems: 'stretch',
-  },
-  item: {
-    backgroundColor: '#e6f7f9',
-    marginBottom: 12,
-    borderRadius: 10,
-    padding: 16,
-    alignItems: 'center',
-    elevation: 3,
-  },
-  paraNumber: {
-    fontWeight: 'bold',
-    fontSize: 16,
-    color: '#004d40',
-    marginBottom: 4,
-  },
-  label: {
-    fontSize: 16,
-    color: '#00796B',
-    marginBottom: 2,
-  },
-  arabic: {
-    fontSize: 20,
-    color: '#2E7D32',
-    fontFamily: 'sans-serif',
-  },
-});
 
 export default ParaIndex;
