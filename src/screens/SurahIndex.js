@@ -143,13 +143,13 @@ const BottomNav = ({ active, onNavigate }) => {
   ];
 
   return (
-    <BlurView intensity={80} tint="dark" style={styles.bottomNav}>
+    <BlurView intensity={100} tint="dark" style={styles.bottomNav}>
       {items.map((item) => (
         <TouchableOpacity
           key={item.id}
           style={styles.navItem}
           onPress={() => onNavigate(item.id)}
-          activeOpacity={0.7}
+          activeOpacity={0.7} //this is for the touch feedback when pressing the nav items
         >
           <Text style={[
             styles.navIcon,
@@ -499,6 +499,8 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     borderTopWidth: 1,
     borderTopColor: "rgba(200,151,42,0.3)",
+   borderTopRightRadius: 70,
+    borderTopLeftRadius: 70,
   },
   navItem: {
     flex: 1,
@@ -512,10 +514,10 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   navIconActive: {
-    opacity: 1,
+    opacity: 100,
     textShadowColor: "rgba(200,151,42,0.6)",
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 6,
+    textShadowOffset: { width: 5, height: 5 },
+    textShadowRadius: 10,
   },
   navLabel: {
     fontSize: 10,
