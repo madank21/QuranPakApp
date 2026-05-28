@@ -52,41 +52,7 @@ const ParaCard = ({ item, onPress }) => {
   const press   = () => Animated.spring(scaleAnim, { toValue: 0.97, useNativeDriver: true }).start();
   const release = () => Animated.spring(scaleAnim, { toValue: 1,    useNativeDriver: true }).start();
 
-  // BottomNav Component - Add this before SurahIndex component
-const BottomNav = ({ active, onNavigate }) => {
-  const items = [
-    { id: "home",   icon: "🏠", label: "Home"   },
-    { id: "viewer", icon: "📖", label: "Viewer" },
-    { id: "surah",  icon: "🕌", label: "Surah"  },
-    { id: "para",   icon: "📑", label: "Para"   },
-  ];
-
-  return (
-    <View style={styles.bottomNav}>
-      {items.map((item) => (
-        <TouchableOpacity
-          key={item.id}
-          style={styles.navItem}
-          onPress={() => onNavigate(item.id)}
-          activeOpacity={0.7}
-        >
-          <Text style={[
-            styles.navIcon,
-            active === item.id && styles.navIconActive
-          ]}>
-            {item.icon}
-          </Text>
-          <Text style={[
-            styles.navLabel,
-            active === item.id && styles.navLabelActive
-          ]}>
-            {item.label}
-          </Text>
-        </TouchableOpacity>
-      ))}
-    </View>
-  );
-};
+  
   return (
     <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
       <TouchableOpacity
@@ -149,6 +115,44 @@ const ParaIndex = ({ navigation }) => {
     ({ item }) => <ParaCard item={item} onPress={handlePress} />,
     [handlePress]
   );
+
+  // BottomNav Component - Add this before SurahIndex component
+import { BlurView } from 'expo-blur';
+
+const BottomNav = ({ active, onNavigate }) => {
+  const items = [
+    { id: "home",   icon: "🏠", label: "Home"   },
+    { id: "viewer", icon: "📖", label: "Viewer" },
+    { id: "surah",  icon: "🕌", label: "Surah"  },
+    { id: "para",   icon: "📑", label: "Para"   },
+  ];
+
+  return (
+    <BlurView intensity={80} tint="dark" style={styles.bottomNav}>
+      {items.map((item) => (
+        <TouchableOpacity
+          key={item.id}
+          style={styles.navItem}
+          onPress={() => onNavigate(item.id)}
+          activeOpacity={0.7}
+        >
+          <Text style={[
+            styles.navIcon,
+            active === item.id && styles.navIconActive
+          ]}>
+            {item.icon}
+          </Text>
+          <Text style={[
+            styles.navLabel,
+            active === item.id && styles.navLabelActive
+          ]}>
+            {item.label}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </BlurView>
+  );
+};
 
   return (
     <View style={styles.root}>
@@ -420,12 +424,10 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     flexDirection: "row",
-    backgroundColor: "rgba(7,13,26,0.95)",
-    borderTopWidth: 1,
-    borderTopColor: "rgba(200,151,42,0.3)",
-    backdropFilter: "blur(20px)", // Note: blur effect might need extra setup in React Native
     paddingVertical: 8,
     paddingBottom: 20,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(200,151,42,0.3)",
   },
   navItem: {
     flex: 1,
