@@ -1,3 +1,124 @@
+import React, { useState } from 'react';
+
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  TextInput,
+  ScrollView,
+  Image,
+} from 'react-native';
+
+import styles from '../styles/appStyles';
+
+const ViewerScreen = ({ navigation }) => {
+  const [inputVal, setInputVal] = useState('');
+  const [pageId, setPageId] = useState(null);
+
+  const handleGo = () => {
+    const v = parseInt(inputVal);
+
+    if (v > 0 && v <= 604) {
+      setPageId(v);
+    }
+  };
+
+  const prev = () => {
+    if (pageId > 1) {
+      setPageId((p) => p - 1);
+    }
+  };
+
+  const next = () => {
+    if (pageId < 604) {
+      setPageId((p) => p + 1);
+    }
+  };
+
+  const imgSrc = pageId
+    ? `https://www.searchtruth.com/quran/images2/${String(pageId).padStart(
+        3,
+        '0'
+      )}.jpg`
+    : null;
+
+  return (
+    <View style={styles.screen}>
+      <View style={styles.viewerHeader}>
+        <TouchableOpacity onPress={() => navigation.navigate('Home')}>
+          <Text style={styles.headerBack}>‹ Back</Text>
+        </TouchableOpacity>
+
+        <Text style={styles.headerTitle}>Quran Viewer</Text>
+
+        <View style={styles.viewerInputRow}>
+          <TextInput
+            style={styles.viewerInput}
+            placeholder="Enter page ID (1–604)…"
+            placeholderTextColor="#8A8A9A"
+            keyboardType="numeric"
+            value={inputVal}
+            onChangeText={setInputVal}
+          />
+
+          <TouchableOpacity
+            style={styles.goBtn}
+            onPress={handleGo}
+          >
+            <Text style={styles.goBtnText}>GO</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {pageId && (
+        <View style={styles.pageNav}>
+          <TouchableOpacity
+            style={styles.navBtn}
+            onPress={prev}
+          >
+            <Text style={styles.navBtnText}>‹</Text>
+          </TouchableOpacity>
+
+          <Text style={styles.pageIndicator}>
+            PAGE {pageId} / 604
+          </Text>
+
+          <TouchableOpacity
+            style={styles.navBtn}
+            onPress={next}
+          >
+            <Text style={styles.navBtnText}>›</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      <ScrollView contentContainerStyle={styles.quranPageWrap}>
+        {imgSrc ? (
+          <Image
+            source={{ uri: imgSrc }}
+            style={styles.quranPageImg}
+            resizeMode="contain"
+          />
+        ) : (
+          <View style={styles.pagePlaceholder}>
+            <Text style={styles.placeholderIcon}>📖</Text>
+
+            <Text style={styles.placeholderText}>
+              Enter a page ID above to view
+            </Text>
+          </View>
+        )}
+      </ScrollView>
+    </View>
+  );
+};
+
+export default ViewerScreen;
+
+
+
+
+
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
