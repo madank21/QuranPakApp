@@ -52,6 +52,41 @@ const ParaCard = ({ item, onPress }) => {
   const press   = () => Animated.spring(scaleAnim, { toValue: 0.97, useNativeDriver: true }).start();
   const release = () => Animated.spring(scaleAnim, { toValue: 1,    useNativeDriver: true }).start();
 
+  // BottomNav Component - Add this before SurahIndex component
+const BottomNav = ({ active, onNavigate }) => {
+  const items = [
+    { id: "home",   icon: "🏠", label: "Home"   },
+    { id: "viewer", icon: "📖", label: "Viewer" },
+    { id: "surah",  icon: "🕌", label: "Surah"  },
+    { id: "para",   icon: "📑", label: "Para"   },
+  ];
+
+  return (
+    <View style={styles.bottomNav}>
+      {items.map((item) => (
+        <TouchableOpacity
+          key={item.id}
+          style={styles.navItem}
+          onPress={() => onNavigate(item.id)}
+          activeOpacity={0.7}
+        >
+          <Text style={[
+            styles.navIcon,
+            active === item.id && styles.navIconActive
+          ]}>
+            {item.icon}
+          </Text>
+          <Text style={[
+            styles.navLabel,
+            active === item.id && styles.navLabelActive
+          ]}>
+            {item.label}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+};
   return (
     <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
       <TouchableOpacity
@@ -186,6 +221,9 @@ const ParaIndex = ({ navigation }) => {
         initialNumToRender={15}
         maxToRenderPerBatch={20}
       />
+
+      {/* Bottom Navigation */}
+      <BottomNav active="surah" onNavigate={handleNavigate} />
     </View>
   );
 };
