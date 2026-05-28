@@ -413,6 +413,53 @@ const styles = StyleSheet.create({
     textShadowRadius: 8,
     flexShrink: 0,
   },
+  // Bottom Navigation
+  bottomNav: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: "row",
+    backgroundColor: "rgba(7,13,26,0.95)",
+    borderTopWidth: 1,
+    borderTopColor: "rgba(200,151,42,0.3)",
+    backdropFilter: "blur(20px)", // Note: blur effect might need extra setup in React Native
+    paddingVertical: 8,
+    paddingBottom: 20,
+  },
+  navItem: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    paddingVertical: 6,
+  },
+  navIcon: {
+    fontSize: 20,
+    opacity: 0.7,
+  },
+  navIconActive: {
+    opacity: 1,
+    textShadowColor: "rgba(200,151,42,0.6)",
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 6,
+  },
+  navLabel: {
+    fontSize: 10,
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+    color: "rgba(138,138,154,0.8)",
+    fontWeight: "500",
+  },
+  navLabelActive: {
+    color: GOLD2,
+  },
+
+  // Update listContent to add bottom padding
+  listContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 80, // Increased to avoid content being hidden behind bottom nav
+  },
 });
 
 export default ParaIndex;
