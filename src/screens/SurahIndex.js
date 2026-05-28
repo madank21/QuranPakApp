@@ -4,6 +4,7 @@ import {
   StyleSheet, Dimensions, StatusBar, Animated,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { BlurView } from 'expo-blur';
 
 const { width } = Dimensions.get("window");
 
@@ -132,6 +133,42 @@ const TEAL  = "#0ABFA3";
 const DEEP  = "#04080F";
 const NAVY  = "#070D1A";
 
+// ── BOTTOM NAV COMPONENT ─────────────────────────────────────────────────────
+const BottomNav = ({ active, onNavigate }) => {
+  const items = [
+    { id: "home",   icon: "🏠", label: "Home"   },
+    { id: "viewer", icon: "📖", label: "Viewer" },
+    { id: "surah",  icon: "🕌", label: "Surah"  },
+    { id: "para",   icon: "📑", label: "Para"   },
+  ];
+
+  return (
+    <BlurView intensity={80} tint="dark" style={styles.bottomNav}>
+      {items.map((item) => (
+        <TouchableOpacity
+          key={item.id}
+          style={styles.navItem}
+          onPress={() => onNavigate(item.id)}
+          activeOpacity={0.7}
+        >
+          <Text style={[
+            styles.navIcon,
+            active === item.id && styles.navIconActive
+          ]}>
+            {item.icon}
+          </Text>
+          <Text style={[
+            styles.navLabel,
+            active === item.id && styles.navLabelActive
+          ]}>
+            {item.label}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </BlurView>
+  );
+};
+
 // ── SURAH CARD ────────────────────────────────────────────────────────────────
 const SurahCard = ({ item, index, onPress }) => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -195,6 +232,26 @@ const SurahIndex = ({ navigation }) => {
     },
     [navigation]
   );
+
+  // Add the handleNavigate function
+  const handleNavigate = useCallback((screen) => {
+    switch(screen) {
+      case "home":
+        navigation.navigate("Home"); // Adjust to your home screen route name
+        break;
+      case "viewer":
+        navigation.navigate("QuranViewer"); // Adjust to your viewer route name
+        break;
+      case "surah":
+        // Already on surah screen, do nothing
+        break;
+      case "para":
+        navigation.navigate("ParaIndex"); // Adjust to your para index route name
+        break;
+      default:
+        break;
+    }
+  }, [navigation]);
 
   const renderItem = useCallback(
     ({ item, index }) => (
@@ -262,6 +319,9 @@ const SurahIndex = ({ navigation }) => {
         initialNumToRender={15}
         maxToRenderPerBatch={20}
       />
+
+      {/* Bottom Navigation */}
+      <BottomNav active="surah" onNavigate={handleNavigate} />
     </View>
   );
 };
@@ -364,7 +424,7 @@ const styles = StyleSheet.create({
   // List
   listContent: {
     paddingHorizontal: 20,
-    paddingBottom: 30,
+    paddingBottom: 80,
   },
 
   // Card
@@ -427,10 +487,49 @@ const styles = StyleSheet.create({
     textShadowRadius: 8,
     flexShrink: 0,
   },
+
+  // Bottom Navigation
+  bottomNav: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: "row",
+    paddingVertical: 8,
+    paddingBottom: 20,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(200,151,42,0.3)",
+  },
+  navItem: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    paddingVertical: 6,
+  },
+  navIcon: {
+    fontSize: 20,
+    opacity: 0.7,
+  },
+  navIconActive: {
+    opacity: 1,
+    textShadowColor: "rgba(200,151,42,0.6)",
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 6,
+  },
+  navLabel: {
+    fontSize: 10,
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+    color: "rgba(138,138,154,0.8)",
+    fontWeight: "500",
+  },
+  navLabelActive: {
+    color: GOLD2,
+  },
 });
 
 export default SurahIndex;
-
 
 
 // import React, { useState } from 'react';

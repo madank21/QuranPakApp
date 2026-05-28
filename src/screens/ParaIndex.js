@@ -4,6 +4,7 @@ import {
   StyleSheet, Animated, StatusBar,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { BlurView } from 'expo-blur';
 
 // ── DATA ──────────────────────────────────────────────────────────────────────
 const paraList = [
@@ -46,13 +47,48 @@ const TEAL  = "#0ABFA3";
 const DEEP  = "#04080F";
 const NAVY  = "#070D1A";
 
+// ── BOTTOM NAV COMPONENT ─────────────────────────────────────────────────────
+const BottomNav = ({ active, onNavigate }) => {
+  const items = [
+    { id: "home",   icon: "🏠", label: "Home"   },
+    { id: "viewer", icon: "📖", label: "Viewer" },
+    { id: "surah",  icon: "🕌", label: "Surah"  },
+    { id: "para",   icon: "📑", label: "Para"   },
+  ];
+
+  return (
+    <BlurView intensity={80} tint="dark" style={styles.bottomNav}>
+      {items.map((item) => (
+        <TouchableOpacity
+          key={item.id}
+          style={styles.navItem}
+          onPress={() => onNavigate(item.id)}
+          activeOpacity={0.7}
+        >
+          <Text style={[
+            styles.navIcon,
+            active === item.id && styles.navIconActive
+          ]}>
+            {item.icon}
+          </Text>
+          <Text style={[
+            styles.navLabel,
+            active === item.id && styles.navLabelActive
+          ]}>
+            {item.label}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </BlurView>
+  );
+};
+
 // ── PARA CARD ─────────────────────────────────────────────────────────────────
 const ParaCard = ({ item, onPress }) => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const press   = () => Animated.spring(scaleAnim, { toValue: 0.97, useNativeDriver: true }).start();
   const release = () => Animated.spring(scaleAnim, { toValue: 1,    useNativeDriver: true }).start();
 
-  
   return (
     <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
       <TouchableOpacity
@@ -104,55 +140,41 @@ const ParaIndex = ({ navigation }) => {
 
   const handlePress = useCallback(
     (para) => {
+      // Navigate to QuranViewer with the para number or image
       if (para.imageId) {
         navigation.navigate("QuranViewer", { imageId: para.imageId });
+      } else {
+        // If no imageId, you might want to navigate with page number
+        // For now, just go to viewer with para number
+        navigation.navigate("QuranViewer", { paraNumber: para.n });
       }
     },
     [navigation]
   );
 
+  const handleNavigate = useCallback((screen) => {
+    switch(screen) {
+      case "home":
+        navigation.navigate("Home"); // Adjust to your home screen route name
+        break;
+      case "viewer":
+        navigation.navigate("QuranViewer"); // Adjust to your viewer route name
+        break;
+      case "surah":
+        navigation.navigate("SurahIndex"); // Adjust to your surah index route name
+        break;
+      case "para":
+        // Already on para screen, do nothing or refresh
+        break;
+      default:
+        break;
+    }
+  }, [navigation]);
+
   const renderItem = useCallback(
     ({ item }) => <ParaCard item={item} onPress={handlePress} />,
     [handlePress]
   );
-
-  // BottomNav Component - Add this before SurahIndex component
-import { BlurView } from 'expo-blur';
-
-const BottomNav = ({ active, onNavigate }) => {
-  const items = [
-    { id: "home",   icon: "🏠", label: "Home"   },
-    { id: "viewer", icon: "📖", label: "Viewer" },
-    { id: "surah",  icon: "🕌", label: "Surah"  },
-    { id: "para",   icon: "📑", label: "Para"   },
-  ];
-
-  return (
-    <BlurView intensity={80} tint="dark" style={styles.bottomNav}>
-      {items.map((item) => (
-        <TouchableOpacity
-          key={item.id}
-          style={styles.navItem}
-          onPress={() => onNavigate(item.id)}
-          activeOpacity={0.7}
-        >
-          <Text style={[
-            styles.navIcon,
-            active === item.id && styles.navIconActive
-          ]}>
-            {item.icon}
-          </Text>
-          <Text style={[
-            styles.navLabel,
-            active === item.id && styles.navLabelActive
-          ]}>
-            {item.label}
-          </Text>
-        </TouchableOpacity>
-      ))}
-    </BlurView>
-  );
-};
 
   return (
     <View style={styles.root}>
@@ -226,8 +248,8 @@ const BottomNav = ({ active, onNavigate }) => {
         maxToRenderPerBatch={20}
       />
 
-      {/* Bottom Navigation */}
-      <BottomNav active="surah" onNavigate={handleNavigate} />
+      {/* Bottom Navigation - Active is "para" now */}
+      <BottomNav active="para" onNavigate={handleNavigate} />
     </View>
   );
 };
@@ -354,7 +376,7 @@ const styles = StyleSheet.create({
   // List
   listContent: {
     paddingHorizontal: 20,
-    paddingBottom: 30,
+    paddingBottom: 80, // Increased to avoid content being hidden behind bottom nav
   },
 
   // Card
@@ -455,12 +477,6 @@ const styles = StyleSheet.create({
   },
   navLabelActive: {
     color: GOLD2,
-  },
-
-  // Update listContent to add bottom padding
-  listContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 80, // Increased to avoid content being hidden behind bottom nav
   },
 });
 
