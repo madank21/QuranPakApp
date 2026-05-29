@@ -1,5 +1,3 @@
-
-
 import { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Animated } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
@@ -153,12 +151,7 @@ const HomeScreen = ({ navigation }) => {
           sub="All 30 Paras (Juz)"
           onPress={() => navigation.navigate("ParaIndex")}
         />
-        <HomeButton
-          icon=""
-          label="Para Index"
-          sub="All 30 Paras (Juz)"
-          onPress={() => navigation.navigate("Settings")}
-        />
+        
 
         {/* Footer */}
         <Text style={styles.footer}>بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</Text>
