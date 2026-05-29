@@ -151,6 +151,12 @@ const HomeScreen = ({ navigation }) => {
           sub="All 30 Paras (Juz)"
           onPress={() => navigation.navigate("ParaIndex")}
         />
+        {/* <HomeButton
+          icon="⚙️"
+          label="Settings"
+          sub="Configure your app preferences"
+          onPress={() => navigation.navigate("Settings")}
+        /> */}
         
 
         {/* Footer */}

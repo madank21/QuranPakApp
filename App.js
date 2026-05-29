@@ -14,7 +14,7 @@ import ParaIndex from './src/screens/ParaIndex';
 import QuranViewer from './src/screens/QuranViewer';
 import SurahIndex from './src/screens/SurahIndex';
 import Setings from "./src/screens/Settings"
-import Settings from './src/screens/Settings';
+//import Settings from './src/screens/Settings';
 
 const Stack = createNativeStackNavigator();
 
@@ -30,7 +30,7 @@ export default function App() {
           <Stack.Screen name="ParaIndex" component={ParaIndex} />
           <Stack.Screen name="QuranViewer" component={QuranViewer} />
           <Stack.Screen name="SurahIndex" component={SurahIndex} />
-          <Stack.Screen name="Settings" component={Settings} />
+          //<Stack.Screen name="Settings" component={Settings} />
         </Stack.Navigator>
       </NavigationContainer>
     </GestureHandlerRootView>
