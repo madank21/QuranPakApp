@@ -1,3 +1,5 @@
+
+
 import { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Animated } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
@@ -150,6 +152,12 @@ const HomeScreen = ({ navigation }) => {
           label="Para Index"
           sub="All 30 Paras (Juz)"
           onPress={() => navigation.navigate("ParaIndex")}
+        />
+        <HomeButton
+          icon=""
+          label="Para Index"
+          sub="All 30 Paras (Juz)"
+          onPress={() => navigation.navigate("Settings")}
         />
 
         {/* Footer */}
@@ -319,6 +327,332 @@ const styles = StyleSheet.create({
 });
 
 export default HomeScreen;
+
+
+
+
+
+
+
+ // HomeScreen.jsx
+
+// import React, { useEffect, useRef } from "react";
+// import {
+//   View,
+//   StyleSheet,
+//   Dimensions,
+//   Animated,
+//   Easing,
+// } from "react-native";
+// import Svg, {
+//   Defs,
+//   LinearGradient,
+//   Stop,
+//   Path,
+//   Circle,
+//   Rect,
+// } from "react-native-svg";
+
+// const { width, height } = Dimensions.get("window");
+
+// const AnimatedSvg = Animated.createAnimatedComponent(Svg);
+
+// export default function HomeScreen() {
+//   const glowAnim = useRef(new Animated.Value(0)).current;
+//   const floatAnim = useRef(new Animated.Value(0)).current;
+//   const rotateAnim = useRef(new Animated.Value(0)).current;
+
+//   useEffect(() => {
+//     Animated.loop(
+//       Animated.sequence([
+//         Animated.timing(glowAnim, {
+//           toValue: 1,
+//           duration: 3500,
+//           easing: Easing.inOut(Easing.ease),
+//           useNativeDriver: true,
+//         }),
+//         Animated.timing(glowAnim, {
+//           toValue: 0,
+//           duration: 3500,
+//           easing: Easing.inOut(Easing.ease),
+//           useNativeDriver: true,
+//         }),
+//       ])
+//     ).start();
+
+//     Animated.loop(
+//       Animated.sequence([
+//         Animated.timing(floatAnim, {
+//           toValue: -12,
+//           duration: 3000,
+//           useNativeDriver: true,
+//         }),
+//         Animated.timing(floatAnim, {
+//           toValue: 0,
+//           duration: 3000,
+//           useNativeDriver: true,
+//         }),
+//       ])
+//     ).start();
+
+//     Animated.loop(
+//       Animated.timing(rotateAnim, {
+//         toValue: 1,
+//         duration: 18000,
+//         easing: Easing.linear,
+//         useNativeDriver: true,
+//       })
+//     ).start();
+//   }, []);
+
+//   const glowOpacity = glowAnim.interpolate({
+//     inputRange: [0, 1],
+//     outputRange: [0.3, 0.9],
+//   });
+
+//   const rotate = rotateAnim.interpolate({
+//     inputRange: [0, 1],
+//     outputRange: ["0deg", "360deg"],
+//   });
+
+//   return (
+//     <View style={styles.container}>
+//       {/* Soft rotating background glow */}
+//       <Animated.View
+//         style={[
+//           styles.rotatingGlow,
+//           {
+//             transform: [{ rotate }],
+//             opacity: glowOpacity,
+//           },
+//         ]}
+//       />
+
+//       {/* Mosque Art */}
+//       <Animated.View
+//         style={{
+//           transform: [{ translateY: floatAnim }],
+//         }}
+//       >
+//         <AnimatedSvg
+//           width={width}
+//           height={height * 0.65}
+//           viewBox="0 0 400 500"
+//         >
+//           <Defs>
+//             <LinearGradient id="domeGrad" x1="0" y1="0" x2="1" y2="1">
+//               <Stop offset="0%" stopColor="#1fd16d" />
+//               <Stop offset="100%" stopColor="#087f3e" />
+//             </LinearGradient>
+
+//             <LinearGradient id="towerGrad" x1="0" y1="0" x2="0" y2="1">
+//               <Stop offset="0%" stopColor="#ffffff" />
+//               <Stop offset="100%" stopColor="#d8d8d8" />
+//             </LinearGradient>
+//           </Defs>
+
+//           {/* Dome */}
+//           <Path
+//             d="
+//               M110 280
+//               C120 180, 280 180, 290 280
+//               L290 310
+//               L110 310
+//               Z
+//             "
+//             fill="url(#domeGrad)"
+//             stroke="#145c32"
+//             strokeWidth="4"
+//           />
+
+//           {/* Dome lines */}
+//           {[130, 150, 170, 190, 210, 230, 250, 270].map((x, i) => (
+//             <Path
+//               key={i}
+//               d={`M200 190 Q${x} 240 ${x} 300`}
+//               stroke="#0f5e31"
+//               strokeWidth="1.7"
+//               fill="none"
+//               opacity={0.45}
+//             />
+//           ))}
+
+//           {/* Dome base */}
+//           <Rect
+//             x="105"
+//             y="305"
+//             width="190"
+//             height="42"
+//             fill="#0d8d47"
+//             stroke="#145c32"
+//             strokeWidth="3"
+//           />
+
+//           {/* Main building */}
+//           <Path
+//             d="
+//               M90 345
+//               L300 345
+//               L300 435
+//               L90 425
+//               Z
+//             "
+//             fill="#f8f8f8"
+//             stroke="#222"
+//             strokeWidth="3"
+//           />
+
+//           {/* Building crack style */}
+//           <Path
+//             d="M120 345 L120 420"
+//             stroke="#222"
+//             strokeWidth="2"
+//           />
+//           <Path
+//             d="M120 365 L135 385 L125 400"
+//             stroke="#222"
+//             strokeWidth="2"
+//           />
+
+//           {/* Decorative circles */}
+//           {[0, 1, 2].map((row) =>
+//             [0, 1, 2].map((col) => (
+//               <Circle
+//                 key={`${row}-${col}`}
+//                 cx={230 + col * 18 - row * 9}
+//                 cy={395 - row * 20}
+//                 r="8"
+//                 fill="#0d9b4f"
+//                 stroke="#145c32"
+//                 strokeWidth="2"
+//               />
+//             ))
+//           )}
+
+//           {/* Minaret */}
+//           <Path
+//             d="
+//               M300 110
+//               L340 110
+//               L350 430
+//               L290 430
+//               Z
+//             "
+//             fill="url(#towerGrad)"
+//             stroke="#c9a86a"
+//             strokeWidth="3"
+//           />
+
+//           {/* Minaret Details */}
+//           <Rect
+//             x="292"
+//             y="180"
+//             width="56"
+//             height="16"
+//             fill="#ffffff"
+//             stroke="#c9a86a"
+//             strokeWidth="2"
+//           />
+
+//           <Rect
+//             x="288"
+//             y="245"
+//             width="64"
+//             height="16"
+//             fill="#ffffff"
+//             stroke="#c9a86a"
+//             strokeWidth="2"
+//           />
+
+//           {/* Zigzag pattern */}
+//           {[0, 1, 2, 3, 4].map((i) => (
+//             <Path
+//               key={i}
+//               d={`M300 ${205 + i * 8} L310 ${210 + i * 8} L320 ${
+//                 205 + i * 8
+//               } L330 ${210 + i * 8} L340 ${205 + i * 8}`}
+//               stroke="#c9a86a"
+//               strokeWidth="2"
+//               fill="none"
+//             />
+//           ))}
+
+//           {/* Top section */}
+//           <Rect
+//             x="305"
+//             y="70"
+//             width="30"
+//             height="45"
+//             fill="#ffffff"
+//             stroke="#c9a86a"
+//             strokeWidth="2"
+//           />
+
+//           {/* Moon */}
+//           <Path
+//             d="
+//               M320 40
+//               A10 10 0 1 1 321 40
+//             "
+//             stroke="#c9a86a"
+//             strokeWidth="4"
+//             fill="none"
+//           />
+
+//           {/* Floating glow behind dome */}
+//           <Circle
+//             cx="200"
+//             cy="220"
+//             r="90"
+//             fill="#8fffba"
+//             opacity="0.18"
+//           />
+//         </AnimatedSvg>
+//       </Animated.View>
+
+//       {/* Bottom fade */}
+//       <View style={styles.bottomFade} />
+//     </View>
+//   );
+// }
+
+// const styles = StyleSheet.create({
+//   container: {
+//     flex: 1,
+//     backgroundColor: "#01963f",
+//     justifyContent: "center",
+//     alignItems: "center",
+//     overflow: "hidden",
+//   },
+
+//   rotatingGlow: {
+//     position: "absolute",
+//     width: 420,
+//     height: 420,
+//     borderRadius: 999,
+//     backgroundColor: "#7dffb2",
+//     opacity: 0.2,
+//     transform: [{ scale: 1.2 }],
+//     shadowColor: "#9dffbf",
+//     shadowOpacity: 0.9,
+//     shadowRadius: 80,
+//     shadowOffset: {
+//       width: 0,
+//       height: 0,
+//     },
+//   },
+
+//   bottomFade: {
+//     position: "absolute",
+//     bottom: -120,
+//     width: width * 1.4,
+//     height: 240,
+//     backgroundColor: "#027531",
+//     borderRadius: 300,
+//     opacity: 0.5,
+//   },
+// });
+
 
 
 
