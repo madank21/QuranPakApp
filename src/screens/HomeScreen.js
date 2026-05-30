@@ -99,14 +99,17 @@ const HomeScreen = ({ navigation }) => {
     <View style={styles.root}>
       {/* Deep space background */}
       <LinearGradient
-        colors={["#04080F", "#070D1A", "#04080F"]}
+        //colors={["#FFFFFF", "#DFFFE8", "#A8F0C6"]}
+        //colors={["#FFFFFF", "#E8FFF1", "#BDF7D0"]}
+        //colors={["#FFFFFF", "#CFFFE0", "#7DE3A7"]}
+        colors={["#FFFFFF", "#EAFBF0", "#B8F3CD"]}
         style={StyleSheet.absoluteFill}
         start={{ x: 0.2, y: 0 }}
         end={{ x: 0.8, y: 1 }}
       />
       {/* Ambient glows */}
-      <View style={[styles.ambientGlow, { top: -80,  left: -60,  backgroundColor: "rgba(10,191,163,0.06)" }]} />
-      <View style={[styles.ambientGlow, { bottom: -60, right: -40, backgroundColor: "rgba(200,151,42,0.06)" }]} />
+      <View style={[styles.ambientGlow, { top: -80,  left: -60,  backgroundColor: "rgba(38, 202, 126, 0.06)" }]} />
+      <View style={[styles.ambientGlow, { bottom: -60, right: -40, backgroundColor: "rgba(31, 216, 230, 0.06)" }]} />
 
       {/* Stars */}
       {stars.map((s) => (
@@ -167,9 +170,9 @@ const HomeScreen = ({ navigation }) => {
 };
 
 // ── STYLES ────────────────────────────────────────────────────────────────────
-const GOLD  = "#C8972A";
-const GOLD2 = "#F0C060";
-const TEAL  = "#0ABFA3";
+const GOLD  = "#62df62";
+const GOLD2 = "#e4a21e";
+const TEAL  = "#06b354";
 
 const styles = StyleSheet.create({
   root: {
@@ -185,7 +188,7 @@ const styles = StyleSheet.create({
   star: {
     position: "absolute",
     borderRadius: 99,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#8cc0df",
   },
   content: {
     flex: 1,
@@ -254,7 +257,7 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: "rgba(200,151,42,0.4)",
+    backgroundColor: "rgba(5, 4, 0, 0.4)",
   },
   dividerDot: {
     color: GOLD,
@@ -267,7 +270,7 @@ const styles = StyleSheet.create({
     width: "100%",
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(10,18,35,0.85)",
+    backgroundColor: ["#FFFFFF", "#E8FFF1", "#BDF7D0"],
     borderWidth: 1,
     borderColor: "rgba(200,151,42,0.3)",
     borderRadius: 14,

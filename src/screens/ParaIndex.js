@@ -4,7 +4,6 @@ import {
   StyleSheet, Animated, StatusBar,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { BlurView } from 'expo-blur';
 
 // ── DATA ──────────────────────────────────────────────────────────────────────
 const paraList = [
@@ -46,42 +45,6 @@ const GOLD2 = "#F0C060";
 const TEAL  = "#0ABFA3";
 const DEEP  = "#04080F";
 const NAVY  = "#070D1A";
-
-// ── BOTTOM NAV COMPONENT ─────────────────────────────────────────────────────
-const BottomNav = ({ active, onNavigate }) => {
-  const items = [
-    { id: "home",   icon: "🏠", label: "Home"   },
-    { id: "viewer", icon: "📖", label: "Viewer" },
-    { id: "surah",  icon: "🕌", label: "Surah"  },
-    { id: "para",   icon: "📑", label: "Para"   },
-  ];
-
-  return (
-    <BlurView intensity={80} tint="dark" style={styles.bottomNav}>
-      {items.map((item) => (
-        <TouchableOpacity
-          key={item.id}
-          style={styles.navItem}
-          onPress={() => onNavigate(item.id)}
-          activeOpacity={0.7}
-        >
-          <Text style={[
-            styles.navIcon,
-            active === item.id && styles.navIconActive
-          ]}>
-            {item.icon}
-          </Text>
-          <Text style={[
-            styles.navLabel,
-            active === item.id && styles.navLabelActive
-          ]}>
-            {item.label}
-          </Text>
-        </TouchableOpacity>
-      ))}
-    </BlurView>
-  );
-};
 
 // ── PARA CARD ─────────────────────────────────────────────────────────────────
 const ParaCard = ({ item, onPress }) => {
@@ -140,36 +103,12 @@ const ParaIndex = ({ navigation }) => {
 
   const handlePress = useCallback(
     (para) => {
-      // Navigate to QuranViewer with the para number or image
       if (para.imageId) {
         navigation.navigate("QuranViewer", { imageId: para.imageId });
-      } else {
-        // If no imageId, you might want to navigate with page number
-        // For now, just go to viewer with para number
-        navigation.navigate("QuranViewer", { paraNumber: para.n });
       }
     },
     [navigation]
   );
-
-  const handleNavigate = useCallback((screen) => {
-    switch(screen) {
-      case "home":
-        navigation.navigate("Home"); // Adjust to your home screen route name
-        break;
-      case "viewer":
-        navigation.navigate("QuranViewer"); // Adjust to your viewer route name
-        break;
-      case "surah":
-        navigation.navigate("SurahIndex"); // Adjust to your surah index route name
-        break;
-      case "para":
-        // Already on para screen, do nothing or refresh
-        break;
-      default:
-        break;
-    }
-  }, [navigation]);
 
   const renderItem = useCallback(
     ({ item }) => <ParaCard item={item} onPress={handlePress} />,
@@ -247,9 +186,6 @@ const ParaIndex = ({ navigation }) => {
         initialNumToRender={15}
         maxToRenderPerBatch={20}
       />
-
-      {/* Bottom Navigation - Active is "para" now */}
-      <BottomNav active="para" onNavigate={handleNavigate} />
     </View>
   );
 };
@@ -298,7 +234,7 @@ const styles = StyleSheet.create({
     fontFamily: "serif",
     color: TEAL,
     letterSpacing: 3,
-    textShadowColor: "rgba(10,191,163,0.3)",
+    textShadowColor: "rgba(199, 3, 3, 0.3)",
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 8,
   },
@@ -376,7 +312,7 @@ const styles = StyleSheet.create({
   // List
   listContent: {
     paddingHorizontal: 20,
-    paddingBottom: 80, // Increased to avoid content being hidden behind bottom nav
+    paddingBottom: 30,
   },
 
   // Card
@@ -434,53 +370,498 @@ const styles = StyleSheet.create({
   cardAr: {
     fontSize: 22,
     color: TEAL,
-    textShadowColor: "rgba(10,191,163,0.3)",
+    textShadowColor: "rgba(3, 199, 85, 0.3)",
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 8,
     flexShrink: 0,
   },
-  // Bottom Navigation
-  bottomNav: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: "row",
-    paddingVertical: 8,
-    paddingBottom: 20,
-    borderTopWidth: 1,
-    borderTopColor: "rgba(200,151,42,0.3)",
-  },
-  navItem: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 4,
-    paddingVertical: 6,
-  },
-  navIcon: {
-    fontSize: 20,
-    opacity: 0.7,
-  },
-  navIconActive: {
-    opacity: 1,
-    textShadowColor: "rgba(200,151,42,0.6)",
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 6,
-  },
-  navLabel: {
-    fontSize: 10,
-    letterSpacing: 0.5,
-    textTransform: "uppercase",
-    color: "rgba(138,138,154,0.8)",
-    fontWeight: "500",
-  },
-  navLabelActive: {
-    color: GOLD2,
-  },
 });
 
 export default ParaIndex;
+
+// import { useState, useRef, useCallback } from "react";
+// import {
+//   View, Text, TextInput, TouchableOpacity, FlatList,
+//   StyleSheet, Animated, StatusBar,
+// } from "react-native";
+// import { LinearGradient } from "expo-linear-gradient";
+// import { BlurView } from 'expo-blur';
+
+// // ── DATA ──────────────────────────────────────────────────────────────────────
+// const paraList = [
+//   { n: 1,  en: "Alif Lam Meem",         ar: "الم",                  startSurah: "Al-Baqarah" },
+//   { n: 2,  en: "Sayaqool",              ar: "سَيَقُولُ",              startSurah: "Al-Baqarah" },
+//   { n: 3,  en: "Tilkal Rusul",          ar: "تِلْكَ الرُّسُلُ",       startSurah: "Al-Baqarah" },
+//   { n: 4,  en: "Lantanalu",             ar: "لَن تَنَالُوا",          startSurah: "Aali Imran" },
+//   { n: 5,  en: "Wal Mohsanat",          ar: "وَالمُحصَنَاتُ",         startSurah: "An-Nisa"   },
+//   { n: 6,  en: "La Yuhibbullah",        ar: "لا يُحِبُّ اللهُ",       startSurah: "An-Nisa"   },
+//   { n: 7,  en: "Wa Iza Sami'u",         ar: "وَإِذَا سَمِعُوا",       startSurah: "Al-Ma'idah"},
+//   { n: 8,  en: "Wa Lau Annana",         ar: "وَلَوْ أَنَّنَا",         startSurah: "Al-An'am" },
+//   { n: 9,  en: "Qalal Mala'u",          ar: "قَالَ الْمَلَأُ",        startSurah: "Al-A'raf" },
+//   { n: 10, en: "Wa A'lamu",             ar: "وَاعْلَمُوا",            startSurah: "Al-Anfal" },
+//   { n: 11, en: "Ya'taziruna",           ar: "يَعْتَذِرُونَ",          startSurah: "At-Tawbah"},
+//   { n: 12, en: "Wa Ma Min Dabbah",      ar: "وَمَا مِن دَابَّةٍ",     startSurah: "Hud"      },
+//   { n: 13, en: "Wa Ma Ubari'u",         ar: "وَمَا أُبَرِّئُ",        startSurah: "Yusuf"    },
+//   { n: 14, en: "Rubama",                ar: "رُّبَمَا",               startSurah: "Al-Hijr"  },
+//   { n: 15, en: "Subhanallazi",          ar: "سُبْحَانَ الَّذِي",      startSurah: "Al-Isra"  },
+//   { n: 16, en: "Qal Alam",              ar: "قَالَ أَلَمْ",           startSurah: "Al-Kahf"  },
+//   { n: 17, en: "Iqtaraba",              ar: "اقْتَرَبَ",              startSurah: "Al-Anbiya"},
+//   { n: 18, en: "Qadd Aflaha",           ar: "قَدْ أَفْلَحَ",          startSurah: "Al-Mu'minun"},
+//   { n: 19, en: "Wa Qalallazina",        ar: "وَقَالَ الَّذِينَ",      startSurah: "Al-Furqan"},
+//   { n: 20, en: "A'man Khalaqa",         ar: "أَمَّنْ خَلَقَ",         startSurah: "An-Naml"  },
+//   { n: 21, en: "Utlu Ma Oohi'a",        ar: "اتْلُ مَا أُوحِيَ",     startSurah: "Al-Ankabut"},
+//   { n: 22, en: "Wa Man Yaqnut",         ar: "وَمَن يَقْنُتْ",         startSurah: "Al-Ahzab" },
+//   { n: 23, en: "Wa Mali",               ar: "وَمَالِيَ",              startSurah: "Ya-Sin"   },
+//   { n: 24, en: "Faman Azlamu",          ar: "فَمَنْ أَظْلَمُ",        startSurah: "Az-Zumar" },
+//   { n: 25, en: "Ilahe Yuruddu",         ar: "إِلَيْهِ يُرَدُّ",       startSurah: "Fussilat" },
+//   { n: 26, en: "Ha'a Meem",             ar: "حم",                    startSurah: "Al-Ahqaf" },
+//   { n: 27, en: "Qala Fama Khatbukum",   ar: "قَالَ فَمَا خَطْبُكُمْ", startSurah: "Adh-Dhariyat"},
+//   { n: 28, en: "Qadd Sami'allah",       ar: "قَدْ سَمِعَ اللَّهُ",   startSurah: "Al-Mujadila"},
+//   { n: 29, en: "Tabarakallazi",         ar: "تَبَارَكَ الَّذِي",      startSurah: "Al-Mulk"  },
+//   { n: 30, en: "Amma Yatasa'aloon",     ar: "عَمَّ يَتَسَاءَلُونَ",   startSurah: "An-Naba"  },
+// ];
+
+// // ── COLORS ─────────────────────────────────────────────────────────────────────
+// const GOLD  = "#C8972A";
+// const GOLD2 = "#F0C060";
+// const TEAL  = "#0ABFA3";
+// const DEEP  = "#04080F";
+// const NAVY  = "#070D1A";
+
+// // ── BOTTOM NAV COMPONENT ─────────────────────────────────────────────────────
+// const BottomNav = ({ active, onNavigate }) => {
+//   const items = [
+//     { id: "home",   icon: "🏠", label: "Home"   },
+//     { id: "viewer", icon: "📖", label: "Viewer" },
+//     { id: "surah",  icon: "🕌", label: "Surah"  },
+//     { id: "para",   icon: "📑", label: "Para"   },
+//   ];
+
+//   return (
+//     <BlurView intensity={80} tint="dark" style={styles.bottomNav}>
+//       {items.map((item) => (
+//         <TouchableOpacity
+//           key={item.id}
+//           style={styles.navItem}
+//           onPress={() => onNavigate(item.id)}
+//           activeOpacity={0.7}
+//         >
+//           <Text style={[
+//             styles.navIcon,
+//             active === item.id && styles.navIconActive
+//           ]}>
+//             {item.icon}
+//           </Text>
+//           <Text style={[
+//             styles.navLabel,
+//             active === item.id && styles.navLabelActive
+//           ]}>
+//             {item.label}
+//           </Text>
+//         </TouchableOpacity>
+//       ))}
+//     </BlurView>
+//   );
+// };
+
+// // ── PARA CARD ─────────────────────────────────────────────────────────────────
+// const ParaCard = ({ item, onPress }) => {
+//   const scaleAnim = useRef(new Animated.Value(1)).current;
+//   const press   = () => Animated.spring(scaleAnim, { toValue: 0.97, useNativeDriver: true }).start();
+//   const release = () => Animated.spring(scaleAnim, { toValue: 1,    useNativeDriver: true }).start();
+
+//   return (
+//     <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+//       <TouchableOpacity
+//         activeOpacity={0.85}
+//         onPressIn={press}
+//         onPressOut={release}
+//         onPress={() => onPress && onPress(item)}
+//         style={styles.card}
+//       >
+//         <LinearGradient
+//           colors={["rgba(10,191,163,0.05)", "rgba(200,151,42,0.03)"]}
+//           style={StyleSheet.absoluteFill}
+//           start={{ x: 0, y: 0 }}
+//           end={{ x: 1, y: 1 }}
+//         />
+//         {/* Left accent — teal for para (distinct from surah's gold→teal) */}
+//         <LinearGradient
+//           colors={[TEAL, GOLD]}
+//           style={styles.cardAccent}
+//           start={{ x: 0, y: 0 }}
+//           end={{ x: 0, y: 1 }}
+//         />
+//         {/* Number badge */}
+//         <View style={styles.numBadge}>
+//           <Text style={styles.numText}>{item.n}</Text>
+//         </View>
+//         {/* Text body */}
+//         <View style={styles.cardBody}>
+//           <Text style={styles.cardEn}>{item.en}</Text>
+//           <Text style={styles.cardMeta}>Starts in: {item.startSurah}</Text>
+//         </View>
+//         {/* Arabic */}
+//         <Text style={styles.cardAr}>{item.ar}</Text>
+//       </TouchableOpacity>
+//     </Animated.View>
+//   );
+// };
+
+// // ── MAIN COMPONENT ────────────────────────────────────────────────────────────
+// const ParaIndex = ({ navigation }) => {
+//   const [query, setQuery] = useState("");
+
+//   const filtered = paraList.filter(
+//     (p) =>
+//       p.en.toLowerCase().includes(query.toLowerCase()) ||
+//       p.ar.includes(query) ||
+//       String(p.n).includes(query)
+//   );
+
+//   const handlePress = useCallback(
+//     (para) => {
+//       // Navigate to QuranViewer with the para number or image
+//       if (para.imageId) {
+//         navigation.navigate("QuranViewer", { imageId: para.imageId });
+//       } else {
+//         // If no imageId, you might want to navigate with page number
+//         // For now, just go to viewer with para number
+//         navigation.navigate("QuranViewer", { paraNumber: para.n });
+//       }
+//     },
+//     [navigation]
+//   );
+
+//   const handleNavigate = useCallback((screen) => {
+//     switch(screen) {
+//       case "home":
+//         navigation.navigate("Home"); // Adjust to your home screen route name
+//         break;
+//       case "viewer":
+//         navigation.navigate("QuranViewer"); // Adjust to your viewer route name
+//         break;
+//       case "surah":
+//         navigation.navigate("SurahIndex"); // Adjust to your surah index route name
+//         break;
+//       case "para":
+//         // Already on para screen, do nothing or refresh
+//         break;
+//       default:
+//         break;
+//     }
+//   }, [navigation]);
+
+//   const renderItem = useCallback(
+//     ({ item }) => <ParaCard item={item} onPress={handlePress} />,
+//     [handlePress]
+//   );
+
+//   return (
+//     <View style={styles.root}>
+//       <StatusBar barStyle="light-content" backgroundColor={DEEP} />
+
+//       {/* Background */}
+//       <LinearGradient
+//         colors={[DEEP, NAVY, "#05101F"]}
+//         style={StyleSheet.absoluteFill}
+//         start={{ x: 0.3, y: 0 }}
+//         end={{ x: 0.7, y: 1 }}
+//       />
+//       {/* Teal glow top-right */}
+//       <View style={[styles.glow, { top: -80, right: -40, backgroundColor: "rgba(10,191,163,0.06)" }]} />
+//       {/* Gold glow bottom-left */}
+//       <View style={[styles.glow, { bottom: 80, left: -60, backgroundColor: "rgba(200,151,42,0.05)" }]} />
+
+//       {/* Header */}
+//       <View style={styles.header}>
+//         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+//           <Text style={styles.backArrow}>‹</Text>
+//           <Text style={styles.backText}>BACK</Text>
+//         </TouchableOpacity>
+//         <View style={styles.headerTitles}>
+//           <Text style={styles.headerTitle}>PARA INDEX</Text>
+//           <Text style={styles.headerCount}>{filtered.length} of 30 Paras</Text>
+//         </View>
+//         {/* Teal badge to differentiate from Surah */}
+//         <View style={styles.headerDecor}>
+//           <Text style={styles.headerAr}>الأَجزاء</Text>
+//         </View>
+//       </View>
+
+//       {/* Search */}
+//       <View style={styles.searchWrap}>
+//         <Text style={styles.searchIcon}>🔍</Text>
+//         <TextInput
+//           style={styles.searchInput}
+//           placeholder="Search para name or number…"
+//           placeholderTextColor="rgba(138,138,154,0.7)"
+//           value={query}
+//           onChangeText={setQuery}
+//         />
+//         {query.length > 0 && (
+//           <TouchableOpacity onPress={() => setQuery("")}>
+//             <Text style={styles.clearBtn}>✕</Text>
+//           </TouchableOpacity>
+//         )}
+//       </View>
+
+//       {/* Divider */}
+//       <View style={styles.headerDivider} />
+
+//       {/* Progress pills */}
+//       <View style={styles.pillsRow}>
+//         {[1, 7, 13, 19, 25].map((n) => (
+//           <View key={n} style={styles.pill}>
+//             <Text style={styles.pillText}>Para {n}–{Math.min(n + 5, 30)}</Text>
+//           </View>
+//         ))}
+//       </View>
+
+//       {/* List */}
+//       <FlatList
+//         data={filtered}
+//         keyExtractor={(item) => String(item.n)}
+//         renderItem={renderItem}
+//         contentContainerStyle={styles.listContent}
+//         showsVerticalScrollIndicator={false}
+//         initialNumToRender={15}
+//         maxToRenderPerBatch={20}
+//       />
+
+//       {/* Bottom Navigation - Active is "para" now */}
+//       <BottomNav active="para" onNavigate={handleNavigate} />
+//     </View>
+//   );
+// };
+
+// // ── STYLES ────────────────────────────────────────────────────────────────────
+// const styles = StyleSheet.create({
+//   root: { flex: 1, backgroundColor: DEEP },
+//   glow: {
+//     position: "absolute",
+//     width: 280,
+//     height: 280,
+//     borderRadius: 140,
+//   },
+
+//   // Header
+//   header: {
+//     paddingTop: 52,
+//     paddingBottom: 16,
+//     paddingHorizontal: 22,
+//     flexDirection: "row",
+//     alignItems: "center",
+//   },
+//   backBtn: {
+//     flexDirection: "row",
+//     alignItems: "center",
+//     gap: 4,
+//   },
+//   backArrow: {
+//     fontSize: 24,
+//     color: TEAL,
+//     lineHeight: 28,
+//   },
+//   backText: {
+//     fontSize: 11,
+//     color: TEAL,
+//     letterSpacing: 2,
+//     fontWeight: "600",
+//   },
+//   headerTitles: {
+//     flex: 1,
+//     marginLeft: 16,
+//   },
+//   headerTitle: {
+//     fontSize: 22,
+//     fontWeight: "900",
+//     fontFamily: "serif",
+//     color: TEAL,
+//     letterSpacing: 3,
+//     textShadowColor: "rgba(10,191,163,0.3)",
+//     textShadowOffset: { width: 0, height: 0 },
+//     textShadowRadius: 8,
+//   },
+//   headerCount: {
+//     fontSize: 11,
+//     color: "rgba(138,138,154,0.8)",
+//     marginTop: 2,
+//     letterSpacing: 1,
+//   },
+//   headerDecor: {
+//     backgroundColor: "rgba(10,191,163,0.1)",
+//     borderWidth: 1,
+//     borderColor: "rgba(10,191,163,0.3)",
+//     borderRadius: 8,
+//     paddingHorizontal: 10,
+//     paddingVertical: 4,
+//   },
+//   headerAr: {
+//     fontSize: 15,
+//     color: TEAL,
+//   },
+
+//   // Search
+//   searchWrap: {
+//     flexDirection: "row",
+//     alignItems: "center",
+//     marginHorizontal: 20,
+//     marginBottom: 12,
+//     backgroundColor: "rgba(10,18,35,0.9)",
+//     borderWidth: 1,
+//     borderColor: "rgba(10,191,163,0.25)",
+//     borderRadius: 12,
+//     paddingHorizontal: 14,
+//     paddingVertical: 2,
+//   },
+//   searchIcon: { fontSize: 14, marginRight: 8 },
+//   searchInput: {
+//     flex: 1,
+//     paddingVertical: 12,
+//     fontSize: 14,
+//     color: "#E8E0D0",
+//     fontFamily: "sans-serif",
+//   },
+//   clearBtn: { fontSize: 14, color: "rgba(138,138,154,0.7)", padding: 4 },
+
+//   headerDivider: {
+//     height: 1,
+//     marginHorizontal: 20,
+//     marginBottom: 10,
+//     backgroundColor: "rgba(10,191,163,0.2)",
+//   },
+
+//   // Quick pills
+//   pillsRow: {
+//     flexDirection: "row",
+//     flexWrap: "wrap",
+//     paddingHorizontal: 18,
+//     gap: 6,
+//     marginBottom: 10,
+//   },
+//   pill: {
+//     backgroundColor: "rgba(10,191,163,0.08)",
+//     borderWidth: 1,
+//     borderColor: "rgba(10,191,163,0.2)",
+//     borderRadius: 20,
+//     paddingHorizontal: 10,
+//     paddingVertical: 4,
+//   },
+//   pillText: {
+//     fontSize: 10,
+//     color: TEAL,
+//     letterSpacing: 0.5,
+//   },
+
+//   // List
+//   listContent: {
+//     paddingHorizontal: 20,
+//     paddingBottom: 80, // Increased to avoid content being hidden behind bottom nav
+//   },
+
+//   // Card
+//   card: {
+//     flexDirection: "row",
+//     alignItems: "center",
+//     backgroundColor: "rgba(10,18,35,0.85)",
+//     borderWidth: 1,
+//     borderColor: "rgba(10,191,163,0.18)",
+//     borderRadius: 14,
+//     marginBottom: 10,
+//     padding: 14,
+//     overflow: "hidden",
+//     gap: 14,
+//     shadowColor: "#000",
+//     shadowOffset: { width: 0, height: 3 },
+//     shadowOpacity: 0.35,
+//     shadowRadius: 8,
+//     elevation: 5,
+//   },
+//   cardAccent: {
+//     position: "absolute",
+//     left: 0, top: 0, bottom: 0,
+//     width: 3,
+//     borderRadius: 3,
+//   },
+//   numBadge: {
+//     width: 40, height: 40,
+//     borderRadius: 10,
+//     backgroundColor: "rgba(10,191,163,0.1)",
+//     borderWidth: 1,
+//     borderColor: "rgba(10,191,163,0.25)",
+//     alignItems: "center",
+//     justifyContent: "center",
+//     flexShrink: 0,
+//   },
+//   numText: {
+//     fontSize: 13,
+//     fontWeight: "800",
+//     color: TEAL,
+//     fontFamily: "serif",
+//   },
+//   cardBody: { flex: 1 },
+//   cardEn: {
+//     fontSize: 15,
+//     fontWeight: "600",
+//     color: "#E8E0D0",
+//     letterSpacing: 0.3,
+//   },
+//   cardMeta: {
+//     fontSize: 11,
+//     color: "rgba(138,138,154,0.7)",
+//     marginTop: 2,
+//   },
+//   cardAr: {
+//     fontSize: 22,
+//     color: TEAL,
+//     textShadowColor: "rgba(10,191,163,0.3)",
+//     textShadowOffset: { width: 0, height: 0 },
+//     textShadowRadius: 8,
+//     flexShrink: 0,
+//   },
+//   // Bottom Navigation
+//   bottomNav: {
+//     position: "absolute",
+//     bottom: 0,
+//     left: 0,
+//     right: 0,
+//     flexDirection: "row",
+//     paddingVertical: 8,
+//     paddingBottom: 20,
+//     borderTopWidth: 1,
+//     borderTopColor: "rgba(200,151,42,0.3)",
+//   },
+//   navItem: {
+//     flex: 1,
+//     alignItems: "center",
+//     justifyContent: "center",
+//     gap: 4,
+//     paddingVertical: 6,
+//   },
+//   navIcon: {
+//     fontSize: 20,
+//     opacity: 0.7,
+//   },
+//   navIconActive: {
+//     opacity: 1,
+//     textShadowColor: "rgba(200,151,42,0.6)",
+//     textShadowOffset: { width: 0, height: 0 },
+//     textShadowRadius: 6,
+//   },
+//   navLabel: {
+//     fontSize: 10,
+//     letterSpacing: 0.5,
+//     textTransform: "uppercase",
+//     color: "rgba(138,138,154,0.8)",
+//     fontWeight: "500",
+//   },
+//   navLabelActive: {
+//     color: GOLD2,
+//   },
+// });
+
+// export default ParaIndex;
 
 
 // import React, { useState } from 'react';
