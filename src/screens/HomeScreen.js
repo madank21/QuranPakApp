@@ -136,11 +136,16 @@ const HomeScreen = ({ navigation }) => {
         </View>
 
         {/* Buttons */}
+        
         <HomeButton
           icon="📖"
           label="Quran Viewer"
           sub="Browse pages by ID (1–604)"
           onPress={() => navigation.navigate("QuranViewer")}
+           colors={["#15e626", "#73eca2", "#d2e4d8"]}
+          style={StyleSheet.absoluteFill}
+           start={{ x: 0.2, y: 0 }}
+           end={{ x: 0.8, y: 1 }}
         />
         <HomeButton
           icon="🕌"
@@ -270,15 +275,15 @@ const styles = StyleSheet.create({
     width: "100%",
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: ["#FFFFFF", "#E8FFF1", "#BDF7D0"],
+   // backgroundColor: "rgba(38, 233, 113, 0.93)",
     borderWidth: 1,
-    borderColor: "rgba(200,151,42,0.3)",
+    borderColor: "rgba(170, 236, 108, 0.3)",
     borderRadius: 14,
     padding: 16,
     marginBottom: 14,
     overflow: "hidden",
     gap: 14,
-    shadowColor: "#000",
+    shadowColor: "#abf1c0",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 12,
