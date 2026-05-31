@@ -297,24 +297,25 @@ const styles = StyleSheet.create({
   btnIconWrap: {
     width: 44, height: 44,
     borderRadius: 10,
-    backgroundColor: "rgba(200,151,42,0.12)",
+    backgroundColor: "rgba(16, 192, 69, 0.15)",
     borderWidth: 1,
-    borderColor: "rgba(200,151,42,0.25)",
+    borderColor: "rgba(26, 148, 179, 0.17)",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "center"
+    
   },
   btnIconText: { fontSize: 20 },
   btnTextWrap: { flex: 1 },
   btnLabel: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#E8E0D0",
+    color: "#251d0d",
     letterSpacing: 0.5,
     fontFamily: "serif",
   },
   btnSub: {
     fontSize: 11,
-    color: "#8A8A9A",
+    color: "#554a35",
     marginTop: 2,
   },
   btnArrow: {
@@ -327,7 +328,7 @@ const styles = StyleSheet.create({
   footer: {
     marginTop: 28,
     fontSize: 16,
-    color: "rgba(200,151,42,0.4)",
+    color: "rgba(107, 73, 1, 0.82)",
     letterSpacing: 2,
   },
 });
