@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
     height: 130,
     borderRadius: 65,
     borderWidth: 1.5,
-    borderColor: GOLD,
+    borderColor: "#151faca9",
     marginBottom: 24,
     shadowColor: GOLD,
     shadowOffset: { width: 0, height: 0 },
@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
   },
   badgeArabic: {
     fontSize: 34,
-    color: GOLD2,
+    color: "#251d0d",
     textShadowColor: "rgba(200,151,42,0.6)",
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 16,
