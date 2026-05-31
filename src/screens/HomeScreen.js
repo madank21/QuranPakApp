@@ -138,15 +138,14 @@ const HomeScreen = ({ navigation }) => {
         {/* Buttons */}
         
         <HomeButton
-          icon="📖"
-          label="Quran Viewer"
-          sub="Browse pages by ID (1–604)"
-          onPress={() => navigation.navigate("QuranViewer")}
-           colors={["#15e626", "#73eca2", "#d2e4d8"]}
-          style={StyleSheet.absoluteFill}
-           start={{ x: 0.2, y: 0 }}
-           end={{ x: 0.8, y: 1 }}
-        />
+  icon="📖"
+  label="Quran Viewer"
+  sub="Browse pages by ID (1–604)"
+  onPress={() => navigation.navigate("QuranViewer")}
+  colors={["#FFFFFF", "#DFFFE8", "#A8F0C6"]}
+  start={{ x: 0, y: 0 }}
+  end={{ x: 1, y: 1 }}
+/>
         <HomeButton
           icon="🕌"
           label="Surah Index"
