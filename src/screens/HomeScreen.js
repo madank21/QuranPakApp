@@ -274,9 +274,9 @@ const styles = StyleSheet.create({
     width: "100%",
     flexDirection: "row",
     alignItems: "center",
-   // backgroundColor: "rgba(38, 233, 113, 0.93)",
+    color: "#abf1c0",
     borderWidth: 1,
-    borderColor: "rgba(170, 236, 108, 0.3)",
+    borderColor: "#abf1c0",
     borderRadius: 14,
     padding: 16,
     marginBottom: 14,
@@ -291,8 +291,7 @@ const styles = StyleSheet.create({
   btnAccent: {
     position: "absolute",
     left: 0, top: 0, bottom: 0,
-    width: 3,
-    borderRadius: 3,
+    width: 3
   },
   btnIconWrap: {
     width: 44, height: 44,
