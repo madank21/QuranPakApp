@@ -321,7 +321,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "rgba(10,18,35,0.85)",
     borderWidth: 1,
-    borderColor: "rgba(10,191,163,0.18)",
+    borderColor: "rgba(46, 190, 169, 0.16)",
     borderRadius: 14,
     marginBottom: 10,
     padding: 14,
@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   numText: {
-    fontSize: 13,
+    fontSize: 16,
     fontWeight: "800",
     color: TEAL,
     fontFamily: "serif",
@@ -359,12 +359,12 @@ const styles = StyleSheet.create({
   cardEn: {
     fontSize: 15,
     fontWeight: "600",
-    color: "#E8E0D0",
+    color: "#251d0dce",
     letterSpacing: 0.3,
   },
   cardMeta: {
     fontSize: 11,
-    color: "rgba(138,138,154,0.7)",
+    color: "rgba(154, 152, 138, 0.65)",
     marginTop: 2,
   },
   cardAr: {
