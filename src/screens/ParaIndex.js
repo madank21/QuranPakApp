@@ -40,9 +40,9 @@ const paraList = [
 ];
 
 // ── COLORS ─────────────────────────────────────────────────────────────────────
-const GOLD  = "#C8972A";
-const GOLD2 = "#F0C060";
-const TEAL  = "#0ABFA3";
+const GOLD  = "#62df62";
+const GOLD2 = "#e4a21e";
+const TEAL  = "#06b354";
 const DEEP  = "#04080F";
 const NAVY  = "#070D1A";
 
@@ -62,7 +62,7 @@ const ParaCard = ({ item, onPress }) => {
         style={styles.card}
       >
         <LinearGradient
-          colors={["rgba(10,191,163,0.05)", "rgba(200,151,42,0.03)"]}
+          colors={["#FFFFFF", "#EAFBF0", "#B8F3CD"]}
           style={StyleSheet.absoluteFill}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
@@ -121,7 +121,7 @@ const ParaIndex = ({ navigation }) => {
 
       {/* Background */}
       <LinearGradient
-        colors={[DEEP, NAVY, "#05101F"]}
+        colors={["#FFFFFF", "#EAFBF0", "#B8F3CD"]}
         style={StyleSheet.absoluteFill}
         start={{ x: 0.3, y: 0 }}
         end={{ x: 0.7, y: 1 }}
@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginHorizontal: 20,
     marginBottom: 12,
-    backgroundColor: "rgba(10,18,35,0.9)",
+    backgroundColor: "rgba(107, 224, 146, 0.14)",
     borderWidth: 1,
     borderColor: "rgba(10,191,163,0.25)",
     borderRadius: 12,
