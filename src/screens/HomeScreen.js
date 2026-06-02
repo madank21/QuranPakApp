@@ -97,10 +97,7 @@ const stars = Array.from({ length: 60 }, (_, i) => ({
 const HomeScreen = ({ navigation }) => {
   return (
     <View style={styles.root}>
-       <Image source={require("../assets/bg.png")}
-        style={{ position: "absolute", width, height, opacity: 0.12 }}
-        resizeMode="cover"
-      />
+       
       {/* Deep space background */}
       <LinearGradient
         //colors={["#FFFFFF", "#DFFFE8", "#A8F0C6"]}
@@ -111,10 +108,16 @@ const HomeScreen = ({ navigation }) => {
         start={{ x: 0.2, y: 0 }}
         end={{ x: 0.8, y: 1 }}
       />
-      <Image source={require("../assets/bg.png")}
-        style={{ position: "absolute", width, height, opacity: 0.12 }}
-        resizeMode="cover"
-      />
+      <Image
+        source={require("../assets/bg.png")}
+        style={{
+         position: "absolute",
+         width,
+         height,
+         opacity: 0.5,
+              }}
+          resizeMode="cover"
+          />
       {/* Ambient glows */}
       <View style={[styles.ambientGlow, { top: -80,  left: -60,  backgroundColor: "rgba(38, 202, 126, 0.06)" }]} />
       <View style={[styles.ambientGlow, { bottom: -60, right: -40, backgroundColor: "rgba(31, 216, 230, 0.06)" }]} />
