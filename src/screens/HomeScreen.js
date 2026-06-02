@@ -60,7 +60,7 @@ const HomeButton = ({ icon, label, sub, onPress }) => {
         style={styles.homeBtn}
       >
         <LinearGradient
-          colors={["rgba(200,151,42,0.07)", "rgba(10,191,163,0.03)"]}
+          colors={["rgba(67, 216, 37, 0.07)", "rgba(10,191,163,0.03)"]}
           style={StyleSheet.absoluteFill}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
@@ -153,7 +153,7 @@ const HomeScreen = ({ navigation }) => {
   label="Quran Viewer"
   sub="Browse pages by ID (1–604)"
   onPress={() => navigation.navigate("QuranViewer")}
-  colors={["#FFFFFF", "#DFFFE8", "#A8F0C6"]}
+  colors={["#575050", "#a4aca6", "#000000"]}
   start={{ x: 0, y: 0 }}
   end={{ x: 1, y: 1 }}
 />
@@ -185,9 +185,9 @@ const HomeScreen = ({ navigation }) => {
 };
 
 // ── STYLES ────────────────────────────────────────────────────────────────────
-const GOLD  = "#62df62";
+const GOLD  = "#c7ebc7";
 const GOLD2 = "#e4a21e";
-const TEAL  = "#06b354";
+const TEAL  = "#ffffff";
 
 const styles = StyleSheet.create({
   root: {
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
   star: {
     position: "absolute",
     borderRadius: 99,
-    backgroundColor: "#8cc0df",
+    backgroundColor: "#fcfcfc",
   },
   content: {
     flex: 1,
@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
     height: 130,
     borderRadius: 65,
     borderWidth: 1.5,
-    borderColor: "#151faca9",
+    borderColor: "#6e72b6a9",
     marginBottom: 24,
     shadowColor: GOLD,
     shadowOffset: { width: 0, height: 0 },
@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
   badgeArabic: {
     fontSize: 34,
     color: "#251d0d",
-    textShadowColor: "rgba(200,151,42,0.6)",
+    textShadowColor: "rgba(255, 244, 244, 0.75)",
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 16,
   },
@@ -285,7 +285,7 @@ const styles = StyleSheet.create({
     width: "100%",
     flexDirection: "row",
     alignItems: "center",
-    color: "#abf1c0",
+    color: "#edfaf1",
     borderWidth: 1,
     borderColor: "#abf1c0",
     borderRadius: 14,
@@ -307,9 +307,9 @@ const styles = StyleSheet.create({
   btnIconWrap: {
     width: 44, height: 44,
     borderRadius: 10,
-    backgroundColor: "rgba(16, 192, 69, 0.15)",
+    backgroundColor: "rgba(167, 231, 186, 0.36)",
     borderWidth: 1,
-    borderColor: "rgba(26, 148, 179, 0.17)",
+    borderColor: "rgba(114, 155, 165, 0.33)",
     alignItems: "center",
     justifyContent: "center"
     
