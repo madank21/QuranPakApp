@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
   },
   headerAr: {
     fontSize: 15,
-    color: TEAL,
+    color: "rgba(5, 5, 4, 0.97)",
   },
 
   // Search
@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     backgroundColor: "rgba(107, 224, 146, 0.14)",
     borderWidth: 1,
-    borderColor: "rgba(36, 236, 186, 0.5)",
+    borderColor: "rgba(3, 10, 8, 0.5)",
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 2,
@@ -296,16 +296,16 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   pill: {
-    backgroundColor: "rgba(22, 189, 164, 0.08)",
+    backgroundColor: "rgba(204, 240, 213, 0.86)",
     borderWidth: 1,
-    borderColor: "rgba(10, 191, 122, 0.2)",
+    borderColor: "rgba(244, 248, 246, 0.49)",
     borderRadius: 20,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
   pillText: {
     fontSize: 10,
-    color: TEAL,
+    color: "#000000",
     letterSpacing: 0.5,
   },
 
