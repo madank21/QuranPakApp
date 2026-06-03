@@ -121,15 +121,15 @@ const ParaIndex = ({ navigation }) => {
 
       {/* Background */}
       <LinearGradient
-        colors={["#FFFFFF", "#EAFBF0", "#B8F3CD"]}
+        colors={["#ffffff", "#15cc1e", "#B8F3CD"]}
         style={StyleSheet.absoluteFill}
         start={{ x: 0.3, y: 0 }}
         end={{ x: 0.7, y: 1 }}
       />
       {/* Teal glow top-right */}
-      <View style={[styles.glow, { top: -80, right: -40, backgroundColor: "rgba(10,191,163,0.06)" }]} />
+      <View style={[styles.glow, { top: -80, right: -40, backgroundColor: "rgba(78, 230, 91, 0.27)" }]} />
       {/* Gold glow bottom-left */}
-      <View style={[styles.glow, { bottom: 80, left: -60, backgroundColor: "rgba(200,151,42,0.05)" }]} />
+      <View style={[styles.glow, { bottom: 80, left: -60, backgroundColor: "rgba(212, 210, 206, 0.47)" }]} />
 
       {/* Header */}
       <View style={styles.header}>
@@ -192,7 +192,7 @@ const ParaIndex = ({ navigation }) => {
 
 // ── STYLES ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: DEEP },
+  root: { flex: 1, backgroundColor: "#00a00d" },
   glow: {
     position: "absolute",
     width: 280,
