@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
   btnIconWrap: {
     width: 44, height: 44,
     borderRadius: 10,
-    backgroundColor: "rgba(103, 253, 148, 0.47)",
+    backgroundColor: "rgba(0, 0, 0, 0.08)",
     borderWidth: 1,
     borderColor: "rgba(114, 155, 165, 0.33)",
     alignItems: "center",
