@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
     height: 130,
     borderRadius: 65,
     borderWidth: 1.5,
-    borderColor: "#6e72b6a9",
+    borderColor: "#c0e7c5a9",
     marginBottom: 24,
     shadowColor: GOLD,
     shadowOffset: { width: 0, height: 0 },
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
   },
   badgeArabic: {
     fontSize: 34,
-    color: "#251d0d",
+    color: "#ffffff",
     textShadowColor: "rgba(255, 244, 244, 0.75)",
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 16,
@@ -248,8 +248,8 @@ const styles = StyleSheet.create({
     fontSize: 30,
     fontWeight: "900",
     letterSpacing: 6,
-    color: GOLD2,
-    textShadowColor: "rgba(200,151,42,0.4)",
+    color: "rgba(255, 218, 137, 0.97)",
+    textShadowColor: "rgba(255, 218, 137, 0.97)",
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 12,
     marginBottom: 4,
@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
   },
   btnArrow: {
     fontSize: 22,
-    color: GOLD,
+    color: "black",
     opacity: 0.7,
   },
 
@@ -339,7 +339,7 @@ const styles = StyleSheet.create({
   footer: {
     marginTop: 28,
     fontSize: 16,
-    color: "rgba(107, 73, 1, 0.82)",
+    color: "rgba(255, 218, 137, 0.97)",
     letterSpacing: 2,
   },
 });
