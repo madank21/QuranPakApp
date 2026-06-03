@@ -60,14 +60,14 @@ const HomeButton = ({ icon, label, sub, onPress }) => {
         style={styles.homeBtn}
       >
         <LinearGradient
-          colors={["rgba(67, 216, 37, 0.07)", "rgba(10,191,163,0.03)"]}
+          colors={["rgb(241, 241, 241)", "rgba(78, 231, 104, 0.45)"]}
           style={StyleSheet.absoluteFill}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         />
         {/* Left accent line */}
         <LinearGradient
-          colors={["#C8972A", "#0ABFA3"]}
+          colors={["#f1cd2b", "#1de23e"]}
           style={styles.btnAccent}
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
@@ -286,6 +286,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     color: "#edfaf1",
+    opacity: 1,
     borderWidth: 1,
     borderColor: "#abf1c0",
     borderRadius: 14,
@@ -307,7 +308,7 @@ const styles = StyleSheet.create({
   btnIconWrap: {
     width: 44, height: 44,
     borderRadius: 10,
-    backgroundColor: "rgba(167, 231, 186, 0.36)",
+    backgroundColor: "rgba(103, 253, 148, 0.47)",
     borderWidth: 1,
     borderColor: "rgba(114, 155, 165, 0.33)",
     alignItems: "center",
