@@ -185,14 +185,14 @@ const SurahCard = ({ item, index, onPress }) => {
         style={styles.card}
       >
         <LinearGradient
-          colors={["rgba(200,151,42,0.05)", "rgba(10,191,163,0.02)"]}
+          colors={["#FFFFFF", "#EAFBF0", "#B8F3CD"]}
           style={StyleSheet.absoluteFill}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         />
         {/* Left accent */}
         <LinearGradient
-          colors={[GOLD2, TEAL]}
+          colors={[TEAL, GOLD]}
           style={styles.cardAccent}
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
@@ -266,13 +266,13 @@ const SurahIndex = ({ navigation }) => {
 
       {/* Background */}
       <LinearGradient
-        colors={[DEEP, NAVY, DEEP]}
+        colors={["#ffffff", "#15cc1e", "#B8F3CD"]}
         style={StyleSheet.absoluteFill}
         start={{ x: 0.3, y: 0 }}
         end={{ x: 0.7, y: 1 }}
       />
-      <View style={[styles.glow, { top: -60, right: -60, backgroundColor: "rgba(200,151,42,0.05)" }]} />
-      <View style={[styles.glow, { bottom: 100, left: -60, backgroundColor: "rgba(10,191,163,0.04)" }]} />
+      <View style={[styles.glow, { top: -60, right: -60, backgroundColor: "rgba(78, 230, 91, 0.27)" }]} />
+      <View style={[styles.glow, { bottom: 100, left: -60, backgroundColor: "rgba(212, 210, 206, 0.47)" }]} />
 
       {/* Header */}
       <View style={styles.header}>
