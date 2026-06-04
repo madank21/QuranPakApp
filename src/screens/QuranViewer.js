@@ -27,6 +27,7 @@ import pageData from '../assets/pageData.json';
 import { useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { LinearGradient } from "expo-linear-gradient";
 
 const { width } = Dimensions.get('window');
 const IMAGE_WIDTH = width * 0.9;
@@ -2827,6 +2828,16 @@ const pinchGesture = Gesture.Pinch()
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
+      {/* Background */}
+            <LinearGradient
+              colors={["#ffffff", "#5df76595", "#B8F3CD"]}
+              style={StyleSheet.absoluteFill}
+              start={{ x: 0.3, y: 0 }}
+              end={{ x: 0.7, y: 1 }}
+            />
+            <View style={[styles.glow, { top: -60, right: -60, backgroundColor: "rgba(78, 230, 91, 0.27)" }]} />
+            <View style={[styles.glow, { bottom: 100, left: -60, backgroundColor: "rgba(212, 210, 206, 0.47)" }]} />
+      
       {/* Search Bar */}
       <View style={styles.searchContainer}>
         <View style={styles.searchRow}>
