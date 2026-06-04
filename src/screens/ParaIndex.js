@@ -369,8 +369,8 @@ const styles = StyleSheet.create({
   },
   cardAr: {
     fontSize: 22,
-    color: TEAL,
-    textShadowColor: "rgba(3, 199, 85, 0.3)",
+    color: "black",
+    textShadowColor: "rgba(248, 253, 250, 0.43)",
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 8,
     flexShrink: 0,

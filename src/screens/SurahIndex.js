@@ -127,47 +127,47 @@ const surahList = [
 ];
 
 // ── COLORS ─────────────────────────────────────────────────────────────────────
-const GOLD  = "#C8972A";
-const GOLD2 = "#F0C060";
-const TEAL  = "#0ABFA3";
+const GOLD  = "#62df62";
+const GOLD2 = "#e4a21e";
+const TEAL  = "#06b354";
 const DEEP  = "#04080F";
 const NAVY  = "#070D1A";
 
 // ── BOTTOM NAV COMPONENT ─────────────────────────────────────────────────────
-const BottomNav = ({ active, onNavigate }) => {
-  const items = [
-    { id: "home",   icon: "🏠", label: "Home"   },
-    { id: "viewer", icon: "📖", label: "Viewer" },
-    { id: "surah",  icon: "🕌", label: "Surah"  },
-    { id: "para",   icon: "📑", label: "Para"   },
-  ];
+// const BottomNav = ({ active, onNavigate }) => {
+//   const items = [
+//     { id: "home",   icon: "🏠", label: "Home"   },
+//     { id: "viewer", icon: "📖", label: "Viewer" },
+//     { id: "surah",  icon: "🕌", label: "Surah"  },
+//     { id: "para",   icon: "📑", label: "Para"   },
+//   ];
 
-  return (
-    <BlurView intensity={100} tint="dark" style={styles.bottomNav}>
-      {items.map((item) => (
-        <TouchableOpacity
-          key={item.id}
-          style={styles.navItem}
-          onPress={() => onNavigate(item.id)}
-          activeOpacity={0.7} //this is for the touch feedback when pressing the nav items
-        >
-          <Text style={[
-            styles.navIcon,
-            active === item.id && styles.navIconActive
-          ]}>
-            {item.icon}
-          </Text>
-          <Text style={[
-            styles.navLabel,
-            active === item.id && styles.navLabelActive
-          ]}>
-            {item.label}
-          </Text>
-        </TouchableOpacity>
-      ))}
-    </BlurView>
-  );
-};
+//   return (
+//     <BlurView intensity={100} tint="dark" style={styles.bottomNav}>
+//       {items.map((item) => (
+//         <TouchableOpacity
+//           key={item.id}
+//           style={styles.navItem}
+//           onPress={() => onNavigate(item.id)}
+//           activeOpacity={0.7} //this is for the touch feedback when pressing the nav items
+//         >
+//           <Text style={[
+//             styles.navIcon,
+//             active === item.id && styles.navIconActive
+//           ]}>
+//             {item.icon}
+//           </Text>
+//           <Text style={[
+//             styles.navLabel,
+//             active === item.id && styles.navLabelActive
+//           ]}>
+//             {item.label}
+//           </Text>
+//         </TouchableOpacity>
+//       ))}
+//     </BlurView>
+//   );
+// };
 
 // ── SURAH CARD ────────────────────────────────────────────────────────────────
 const SurahCard = ({ item, index, onPress }) => {
@@ -320,15 +320,15 @@ const SurahIndex = ({ navigation }) => {
         maxToRenderPerBatch={20}
       />
 
-      {/* Bottom Navigation */}
-      <BottomNav active="surah" onNavigate={handleNavigate} />
+      {/* Bottom Navigation
+      <BottomNav active="surah" onNavigate={handleNavigate} /> */}
     </View>
   );
 };
 
 // ── STYLES ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: DEEP },
+  root: { flex: 1, backgroundColor: "#00a00d" },
   glow: {
     position: "absolute",
     width: 280,
