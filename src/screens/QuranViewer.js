@@ -34,6 +34,14 @@ const IMAGE_WIDTH = width * 0.9;
 const IMAGE_HEIGHT = 500;
 const ITEM_HEIGHT = IMAGE_HEIGHT + 5;
 
+//TO make it work on every device we need to scale the coordinates of the boxes according to the image size
+const ORIGINAL_IMAGE_WIDTH = 324;
+const ORIGINAL_IMAGE_HEIGHT = 500;
+const scaleX = (x) =>
+  (x / ORIGINAL_IMAGE_WIDTH) * IMAGE_WIDTH;
+
+const scaleY = (y) =>
+  (y / ORIGINAL_IMAGE_HEIGHT) * IMAGE_HEIGHT;
 const LAST_PAGE_KEY = 'quran_last_page';
 
 
@@ -2566,6 +2574,8 @@ const images = [
     id: 632,
     source: require('../assets/images/img_632.png'),
     },
+
+
 ]
 
 
@@ -2585,7 +2595,8 @@ const QuranViewer = () => {
   const [searchInput, setSearchInput] = useState('');
   const flatListRef = useRef(null);
   const [isZoomed, setIsZoomed] = useState(false);
-  
+  // console.log("IMAGE_WIDTH:", IMAGE_WIDTH);
+  // console.log("IMAGE_HEIGHT:", IMAGE_HEIGHT);
 
   // --- State for boxes / highlights ---
   const [boxPositions, setBoxPositions] = useState({});
@@ -2725,9 +2736,13 @@ const pinchGesture = Gesture.Pinch()
       <View
         key={`box-${boxKey}`}
         style={[
-          styles.box,
-          { left: (position.x / DESIGN_WIDTH) * IMAGE_WIDTH, top: (position.y / DESIGN_HEIGHT) * IMAGE_HEIGHT, borderColor: isEditingBox ? 'blue' : 'black' },
-        ]}
+              styles.box,
+              {
+                left: scaleX(position.x),
+                top: scaleY(position.y),
+                borderColor: isEditingBox ? 'blue' : 'black',
+              },
+            ]}
         {...(isEditingBox ? panResponder.panHandlers : {})}
       >
         {isEditingBox ? (
@@ -2767,16 +2782,19 @@ const pinchGesture = Gesture.Pinch()
       <View
         key={`hl-${hlKey}`}
         style={[
-          styles.highlight,
-          {
-            left: position.x,
-            top: position.y,
-            borderColor: isEditingHighlight ? 'red' : 'yellow',
-            backgroundColor: isActive ? 'yellow' : 'transparent',
-            opacity: isActive ? 0.4 : 0.2,
-           
-          },
-        ]}
+            styles.highlight,
+            {
+              left: scaleX(position.x),
+              top: scaleY(position.y),
+
+              width: scaleX(235),
+              height: scaleY(27),
+
+              borderColor: isEditingHighlight ? 'red' : 'yellow',
+              backgroundColor: isActive ? 'yellow' : 'transparent',
+              opacity: isActive ? 0.4 : 0.2,
+            },
+          ]}
         {...(isEditingHighlight ? panResponder.panHandlers : {})}
       />
     );
