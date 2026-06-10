@@ -2566,9 +2566,6 @@ const images = [
     id: 632,
     source: require('../assets/images/img_632.png'),
     },
-
-
-
 ]
 
 
@@ -2729,7 +2726,7 @@ const pinchGesture = Gesture.Pinch()
         key={`box-${boxKey}`}
         style={[
           styles.box,
-          { left: position.x, top: position.y, borderColor: isEditingBox ? 'blue' : 'black' },
+          { left: (position.x / DESIGN_WIDTH) * IMAGE_WIDTH, top: (position.y / DESIGN_HEIGHT) * IMAGE_HEIGHT, borderColor: isEditingBox ? 'blue' : 'black' },
         ]}
         {...(isEditingBox ? panResponder.panHandlers : {})}
       >
