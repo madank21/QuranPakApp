@@ -11,41 +11,40 @@ import {
   TextInput,
   PanResponder,
 } from 'react-native';
-import {
-  GestureHandlerRootView,
-  PinchGestureHandler,
-  PanGestureHandler,
-  TapGestureHandler,
-  NativeViewGestureHandler,
-} from 'react-native-gesture-handler';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
+  withTiming,
   runOnJS,
+  useAnimatedGestureHandler,
 } from 'react-native-reanimated';
+import {
+  PinchGestureHandler,
+  PanGestureHandler,
+} from 'react-native-gesture-handler';
 import pageData from '../assets/pageData.json';
 import { useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { LinearGradient } from "expo-linear-gradient";
+import { LinearGradient } from 'expo-linear-gradient';
 
-const { width } = Dimensions.get('window');
+const { width, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const IMAGE_WIDTH = width * 0.9;
 const IMAGE_HEIGHT = 500;
 const ITEM_HEIGHT = IMAGE_HEIGHT + 5;
 
-//TO make it work on every device we need to scale the coordinates of the boxes according to the image size
 const ORIGINAL_IMAGE_WIDTH = 324;
 const ORIGINAL_IMAGE_HEIGHT = 500;
-const scaleX = (x) =>
-  (x / ORIGINAL_IMAGE_WIDTH) * IMAGE_WIDTH;
+const scaleX = (x) => (x / ORIGINAL_IMAGE_WIDTH) * IMAGE_WIDTH;
+const scaleY = (y) => (y / ORIGINAL_IMAGE_HEIGHT) * IMAGE_HEIGHT;
 
-const scaleY = (y) =>
-  (y / ORIGINAL_IMAGE_HEIGHT) * IMAGE_HEIGHT;
 const LAST_PAGE_KEY = 'quran_last_page';
+const MIN_SCALE = 1;
+const MAX_SCALE = 4;
 
 
 const images = [
+
   {
     id: 1,
     source: require('../assets/images/img_1.png'),
@@ -2581,74 +2580,166 @@ const images = [
 
 
 
+// ─────────────────────────────────────────────
+// Zoom Container (per page)
+// ─────────────────────────────────────────────
+const ZoomablePageItem = React.memo(({ item, renderBoxes, renderHighlights, renderBackButton }) => {
+  const scale = useSharedValue(1);
+  const savedScale = useSharedValue(1);
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  const savedX = useSharedValue(0);
+  const savedY = useSharedValue(0);
+  const focalX = useSharedValue(0);
+  const focalY = useSharedValue(0);
 
+  const pinchRef = useRef();
+  const panRef = useRef();
 
+  // Clamp translation so image never goes out of viewport bounds
+  const clampTranslation = (tx, ty, currentScale) => {
+    'worklet';
+    const maxX = ((currentScale - 1) * IMAGE_WIDTH) / 2;
+    const maxY = ((currentScale - 1) * IMAGE_HEIGHT) / 2;
+    return {
+      x: Math.min(Math.max(tx, -maxX), maxX),
+      y: Math.min(Math.max(ty, -maxY), maxY),
+    };
+  };
 
+  const pinchHandler = useAnimatedGestureHandler({
+    onStart: (event) => {
+      focalX.value = event.focalX;
+      focalY.value = event.focalY;
+      savedScale.value = scale.value;
+      savedX.value = translateX.value;
+      savedY.value = translateY.value;
+    },
+    onActive: (event) => {
+      const nextScale = Math.min(Math.max(savedScale.value * event.scale, MIN_SCALE), MAX_SCALE);
 
+      // Focal point adjustment so zoom targets pinch center
+      const originX = focalX.value - IMAGE_WIDTH / 2;
+      const originY = focalY.value - IMAGE_HEIGHT / 2;
 
+      const scaleDiff = nextScale / savedScale.value;
+      const newTx = savedX.value + (originX - savedX.value) * (1 - scaleDiff);
+      const newTy = savedY.value + (originY - savedY.value) * (1 - scaleDiff);
 
+      scale.value = nextScale;
+      const clamped = clampTranslation(newTx, newTy, nextScale);
+      translateX.value = clamped.x;
+      translateY.value = clamped.y;
+    },
+    onEnd: () => {
+      savedScale.value = scale.value;
+      savedX.value = translateX.value;
+      savedY.value = translateY.value;
 
+      // Snap back to 1 if scale went below 1
+      if (scale.value <= 1) {
+        scale.value = withTiming(1);
+        translateX.value = withTiming(0);
+        translateY.value = withTiming(0);
+        savedScale.value = 1;
+        savedX.value = 0;
+        savedY.value = 0;
+      }
+    },
+  });
 
+  const panHandler = useAnimatedGestureHandler({
+    onStart: () => {
+      savedX.value = translateX.value;
+      savedY.value = translateY.value;
+    },
+    onActive: (event) => {
+      if (scale.value <= 1) return;
+      const clamped = clampTranslation(
+        savedX.value + event.translationX,
+        savedY.value + event.translationY,
+        scale.value
+      );
+      translateX.value = clamped.x;
+      translateY.value = clamped.y;
+    },
+    onEnd: () => {
+      savedX.value = translateX.value;
+      savedY.value = translateY.value;
+    },
+  });
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: translateX.value },
+      { translateY: translateY.value },
+      { scale: scale.value },
+    ],
+  }));
+
+  // Double tap to reset zoom
+  const doubleTapHandler = useAnimatedGestureHandler({
+    onActive: () => {
+      scale.value = withTiming(1);
+      translateX.value = withTiming(0);
+      translateY.value = withTiming(0);
+      savedScale.value = 1;
+      savedX.value = 0;
+      savedY.value = 0;
+    },
+  });
+
+  return (
+    <View style={{ height: ITEM_HEIGHT, alignItems: 'center' }}>
+      <PinchGestureHandler
+        ref={pinchRef}
+        onGestureEvent={pinchHandler}
+        simultaneousHandlers={panRef}
+      >
+        <Animated.View style={{ width: IMAGE_WIDTH, height: IMAGE_HEIGHT }}>
+          <PanGestureHandler
+            ref={panRef}
+            onGestureEvent={panHandler}
+            simultaneousHandlers={pinchRef}
+            minPointers={2}
+            maxPointers={2}
+            avgTouches
+          >
+            <Animated.View
+              style={[{ width: IMAGE_WIDTH, height: IMAGE_HEIGHT }, animatedStyle]}
+            >
+              <Image source={item.source} style={styles.image} resizeMode="contain" />
+              {renderBoxes()}
+              {renderHighlights()}
+              {renderBackButton()}
+            </Animated.View>
+          </PanGestureHandler>
+        </Animated.View>
+      </PinchGestureHandler>
+    </View>
+  );
+});
+
+// ─────────────────────────────────────────────
+// Main Component
+// ─────────────────────────────────────────────
 const QuranViewer = () => {
   const route = useRoute();
   const { imageId = null, juzId = null } = route.params || {};
   const [searchInput, setSearchInput] = useState('');
   const flatListRef = useRef(null);
-  const [isZoomed, setIsZoomed] = useState(false);
-  // console.log("IMAGE_WIDTH:", IMAGE_WIDTH);
-  // console.log("IMAGE_HEIGHT:", IMAGE_HEIGHT);
 
-  // --- State for boxes / highlights ---
   const [boxPositions, setBoxPositions] = useState({});
   const [highlightPositions, setHighlightPositions] = useState({});
   const [isEditingBox, setIsEditingBox] = useState(false);
   const [isEditingHighlight, setIsEditingHighlight] = useState(false);
   const [prevPageId, setPrevPageId] = useState(null);
+  const [activeHighlights, setActiveHighlights] = useState({ pageId: null, highlightIds: [] });
 
-  //for zooming
-  const scale = useSharedValue(1);
-const savedScale = useSharedValue(1);
-
-const translateX = useSharedValue(0);
-const translateY = useSharedValue(0);
-
-const savedX = useSharedValue(0);
-const savedY = useSharedValue(0);
-
-const pinchGesture = Gesture.Pinch()
-  .onUpdate((event) => {
-    const nextScale = savedScale.value * event.scale;
-
-    scale.value = Math.min(
-      Math.max(nextScale, 1),
-      3
-    );
-  })
-  .onEnd(() => {
-    savedScale.value = scale.value;
-  });
-
-
-
-  const animatedStyle = useAnimatedStyle(() => {
-  return {
-    transform: [
-      { scale: scale.value }
-    ],
-  };
-});
-
-  // Active highlights (set when box is pressed)
-  const [activeHighlights, setActiveHighlights] = useState({
-    pageId: null,
-    highlightIds: [],
-  });
-
-  // --- Save last visible page ---
+  // ── Save last page ──
   const onViewableItemsChanged = useCallback(({ viewableItems }) => {
     if (viewableItems?.length > 0) {
-      const vi = viewableItems[0];
-      AsyncStorage.setItem(LAST_PAGE_KEY, JSON.stringify({ id: vi.item.id }));
+      AsyncStorage.setItem(LAST_PAGE_KEY, JSON.stringify({ id: viewableItems[0].item.id }));
     }
   }, []);
 
@@ -2660,22 +2751,18 @@ const pinchGesture = Gesture.Pinch()
     }
   };
 
-  const getIndexById = useCallback(
-    (pageId) => images.findIndex((img) => img.id === pageId),
-    []
-  );
+  const getIndexById = useCallback((pageId) => images.findIndex((img) => img.id === pageId), []);
 
   const scrollToPage = (pageId, highlightIds = []) => {
     const index = getIndexById(pageId);
     if (index !== -1 && flatListRef.current) {
       flatListRef.current.scrollToOffset({ offset: ITEM_HEIGHT * index, animated: true });
       setActiveHighlights({ pageId, highlightIds });
-      setTimeout(() => {
-        setActiveHighlights({ pageId: null, highlightIds: [] });
-      }, 8000);
+      setTimeout(() => setActiveHighlights({ pageId: null, highlightIds: [] }), 8000);
     }
   };
 
+  // ── Navigate on mount ──
   useEffect(() => {
     const targetId = imageId ?? juzId;
     if (targetId !== null && flatListRef.current) {
@@ -2686,16 +2773,13 @@ const pinchGesture = Gesture.Pinch()
     }
   }, [imageId, juzId]);
 
+  // ── Load box/highlight positions from JSON ──
   useEffect(() => {
     const boxPos = {};
     const highlightPos = {};
     pageData.forEach((page) => {
-      (page.boxes || []).forEach((box) => {
-        boxPos[box.id] = { x: box.x, y: box.y };
-      });
-      (page.highlights || []).forEach((hl) => {
-        highlightPos[hl.id] = { x: hl.x, y: hl.y };
-      });
+      (page.boxes || []).forEach((box) => { boxPos[box.id] = { x: box.x, y: box.y }; });
+      (page.highlights || []).forEach((hl) => { highlightPos[hl.id] = { x: hl.x, y: hl.y }; });
     });
     setBoxPositions(boxPos);
     setHighlightPositions(highlightPos);
@@ -2703,24 +2787,21 @@ const pinchGesture = Gesture.Pinch()
 
   const handleSearch = () => {
     const targetId = parseInt(searchInput);
-    if (isNaN(targetId)) {
-      Alert.alert('Invalid Input', 'Please enter a valid page ID');
-      return;
-    }
+    if (isNaN(targetId)) { Alert.alert('Invalid Input', 'Please enter a valid page ID'); return; }
     const index = images.findIndex((img) => img.id === targetId);
     if (index !== -1 && flatListRef.current) {
       flatListRef.current.scrollToIndex({ index, animated: true });
       setPrevPageId(null);
-      
     } else {
       Alert.alert('Not Found', `No page found with ID ${targetId}`);
     }
   };
 
-  // --- Renderers ---
-  const renderDraggableBox = (pageId, box) => {
+  // ─── Draggable Box ───
+  const renderDraggableBox = useCallback((pageId, box) => {
     const boxKey = box.id;
     const position = boxPositions?.[boxKey] || { x: 100, y: 100 };
+
     const panResponder = PanResponder.create({
       onStartShouldSetPanResponder: () => isEditingBox,
       onPanResponderMove: (_, gesture) => {
@@ -2736,13 +2817,13 @@ const pinchGesture = Gesture.Pinch()
       <View
         key={`box-${boxKey}`}
         style={[
-              styles.box,
-              {
-                left: scaleX(position.x),
-                top: scaleY(position.y),
-                borderColor: isEditingBox ? 'blue' : 'black',
-              },
-            ]}
+          styles.box,
+          {
+            left: scaleX(position.x),
+            top: scaleY(position.y),
+            borderColor: isEditingBox ? 'blue' : 'transparent',
+          },
+        ]}
         {...(isEditingBox ? panResponder.panHandlers : {})}
       >
         {isEditingBox ? (
@@ -2755,14 +2836,16 @@ const pinchGesture = Gesture.Pinch()
             }}
             style={styles.touchable}
           />
-        )}  
+        )}
       </View>
     );
-  };
+  }, [boxPositions, isEditingBox, scrollToPage]);
 
-  const renderHighlightLine = (pageId, hl) => {
+  // ─── Highlight ───
+  const renderHighlightLine = useCallback((pageId, hl) => {
     const hlKey = hl.id;
     const position = highlightPositions[hlKey] || { x: 30, y: 150 };
+
     const panResponder = PanResponder.create({
       onStartShouldSetPanResponder: () => isEditingHighlight,
       onPanResponderMove: (_, gesture) => {
@@ -2782,77 +2865,63 @@ const pinchGesture = Gesture.Pinch()
       <View
         key={`hl-${hlKey}`}
         style={[
-            styles.highlight,
-            {
-              left: scaleX(position.x),
-              top: scaleY(position.y),
-
-              width: scaleX(235),
-              height: scaleY(27),
-
-              borderColor: isEditingHighlight ? 'red' : 'yellow',
-              backgroundColor: isActive ? 'yellow' : 'transparent',
-              opacity: isActive ? 0.4 : 0.2,
-            },
-          ]}
+          styles.highlight,
+          {
+            left: scaleX(position.x),
+            top: scaleY(position.y),
+            width: scaleX(235),
+            height: scaleY(27),
+            borderColor: isEditingHighlight ? 'red' : 'transparent',
+            backgroundColor: isActive ? 'yellow' : 'transparent',
+            opacity: isActive ? 0.4 : 0.2,
+          },
+        ]}
         {...(isEditingHighlight ? panResponder.panHandlers : {})}
       />
     );
-  };
+  }, [highlightPositions, isEditingHighlight, activeHighlights]);
 
-  const renderBackButton = (currentPageId) =>
+  // ─── Back Button ───
+  const renderBackButton = useCallback((currentPageId) =>
     prevPageId && currentPageId !== prevPageId ? (
       <TouchableOpacity
-        onPress={() => {
-          scrollToPage(prevPageId);
-          setPrevPageId(null);
-        }}
+        onPress={() => { scrollToPage(prevPageId); setPrevPageId(null); }}
         style={styles.backButton}
       >
         <Text style={styles.backText}>← Back</Text>
       </TouchableOpacity>
-    ) : null;
+    ) : null,
+  [prevPageId, scrollToPage]);
 
+  // ─── Render Item ───
+  const renderItem = useCallback(({ item }) => {
+    const pageId = item.id;
+    const pageDataEntry = pageData.find((p) => p.id === item.id) || {};
+    const boxList = pageDataEntry.boxes || [];
+    const highlightList = pageDataEntry.highlights || [];
 
-  const renderItem = ({ item }) => {
-  const pageId = item.id;
-  const pageDataEntry = pageData.find((p) => p.id === item.id) || {};
-  const boxList = pageDataEntry.boxes || [];
-  const highlightList = pageDataEntry.highlights || [];
-
-  return (
-    
-    <View style={{ height: ITEM_HEIGHT, alignItems: 'center' }}>
-      <View style={{ width: IMAGE_WIDTH, height: IMAGE_HEIGHT }}>
-       
-        <Image
-  source={item.source}
-  style={styles.image}
-  resizeMode="contain"
-/>
-        {boxList.map((box) => renderDraggableBox(pageId, box))}
-        {highlightList.map((hl) => renderHighlightLine(pageId, hl))}
-        {renderBackButton(pageId)}
-      
-      </View>
-    </View>
-
-  );
-};
-
+    return (
+      <ZoomablePageItem
+        item={item}
+        renderBoxes={() => boxList.map((box) => renderDraggableBox(pageId, box))}
+        renderHighlights={() => highlightList.map((hl) => renderHighlightLine(pageId, hl))}
+        renderBackButton={() => renderBackButton(pageId)}
+      />
+    );
+  }, [renderDraggableBox, renderHighlightLine, renderBackButton]);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       {/* Background */}
-            <LinearGradient
-              colors={["#ffffff", "#5df76595", "#B8F3CD"]}
-              style={StyleSheet.absoluteFill}
-              start={{ x: 0.3, y: 0 }}
-              end={{ x: 0.7, y: 1 }}
-            />
-            <View style={[styles.glow, { top: -60, right: -60, backgroundColor: "rgba(78, 230, 91, 0.27)" }]} />
-            <View style={[styles.glow, { bottom: 100, left: -60, backgroundColor: "rgba(212, 210, 206, 0.47)" }]} />
-      
+      <LinearGradient
+        colors={['#ffffff', '#5df76595', '#B8F3CD']}
+        style={StyleSheet.absoluteFill}
+        start={{ x: 0.3, y: 0 }}
+        end={{ x: 0.7, y: 1 }}
+      />
+      <View style={[styles.glow, { top: -60, right: -60, backgroundColor: 'rgba(78,230,91,0.27)' }]} />
+      <View style={[styles.glow, { bottom: 100, left: -60, backgroundColor: 'rgba(212,210,206,0.47)' }]} />
+
       {/* Search Bar */}
       <View style={styles.searchContainer}>
         <View style={styles.searchRow}>
@@ -2871,33 +2940,28 @@ const pinchGesture = Gesture.Pinch()
         </View>
       </View>
 
-      <GestureDetector gesture={pinchGesture}>
-  <Animated.View
-  collapsable={false}
-  style={[{ flex: 1 }, animatedStyle]}
->
-    <FlatList
-      ref={flatListRef}
-      data={images}
-      renderItem={renderItem}
-      keyExtractor={(item) => item.id.toString()}
-      getItemLayout={(_, index) => ({
-        length: ITEM_HEIGHT,
-        offset: ITEM_HEIGHT * index,
-        index,
-      })}
-      initialNumToRender={5}
-      maxToRenderPerBatch={5}
-      windowSize={7}
-      scrollEventThrottle={16}
-      viewabilityConfig={{
-        itemVisiblePercentThreshold: 60,
-      }}
-      onViewableItemsChanged={onViewableItemsChanged}
-      onMomentumScrollEnd={handleScrollEnd}
-    />
-  </Animated.View>
-</GestureDetector>
+      {/* List */}
+      <FlatList
+        ref={flatListRef}
+        data={images}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id.toString()}
+        getItemLayout={(_, index) => ({
+          length: ITEM_HEIGHT,
+          offset: ITEM_HEIGHT * index,
+          index,
+        })}
+        initialNumToRender={3}
+        maxToRenderPerBatch={3}
+        windowSize={5}
+        removeClippedSubviews={true}
+        scrollEventThrottle={16}
+        viewabilityConfig={{ itemVisiblePercentThreshold: 60 }}
+        onViewableItemsChanged={onViewableItemsChanged}
+        onMomentumScrollEnd={handleScrollEnd}
+        // Allow FlatList scroll only when not pinching inside an item
+        scrollEnabled={true}
+      />
     </GestureHandlerRootView>
   );
 };
@@ -2907,11 +2971,6 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: '#f9f9f9',
     marginTop: 15,
-  },
-  searchLabel: {
-    fontSize: 14,
-    marginBottom: 5,
-    color: '#333',
   },
   searchRow: {
     flexDirection: 'row',
@@ -2934,7 +2993,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   searchButton: {
-    backgroundColor: '#7e857eff',
+    backgroundColor: '#7e857e',
     paddingVertical: 10,
     paddingHorizontal: 15,
     borderRadius: 5,
@@ -2944,8 +3003,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   image: {
-    width: '100%',
-    height: '100%',
     width: IMAGE_WIDTH,
     height: IMAGE_HEIGHT,
   },
@@ -2953,18 +3010,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 28,
     height: 12,
-    fontSize: 10,
     borderWidth: 1,
     borderStyle: 'solid',
     backgroundColor: 'transparent',
   },
-  highlight: { 
+  highlight: {
     position: 'absolute',
-    width: 235,
-    height: 27,
     borderWidth: 2,
     opacity: 0.3,
-    backgroundColor: 'yellow',
   },
   boxText: {
     color: 'black',
@@ -2984,6 +3037,13 @@ const styles = StyleSheet.create({
   backText: {
     color: '#fff',
     fontSize: 14,
+  },
+  glow: {
+    position: 'absolute',
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    opacity: 0.6,
   },
 });
 
