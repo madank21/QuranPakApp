@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
@@ -11,24 +12,21 @@ import {
   TextInput,
   PanResponder,
 } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { GestureHandlerRootView, Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  runOnJS,
-  useAnimatedGestureHandler,
 } from 'react-native-reanimated';
-import {
-  PinchGestureHandler,
-  PanGestureHandler,
-} from 'react-native-gesture-handler';
 import pageData from '../assets/pageData.json';
 import { useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 
-const { width, height: SCREEN_HEIGHT } = Dimensions.get('window');
+// ─────────────────────────────────────────────
+// Constants
+// ─────────────────────────────────────────────
+const { width } = Dimensions.get('window');
 const IMAGE_WIDTH = width * 0.9;
 const IMAGE_HEIGHT = 500;
 const ITEM_HEIGHT = IMAGE_HEIGHT + 5;
@@ -2580,214 +2578,253 @@ const images = [
 
 
 
-// ─────────────────────────────────────────────
-// Zoom Container (per page)
-// ─────────────────────────────────────────────
-const ZoomablePageItem = React.memo(({ item, renderBoxes, renderHighlights, renderBackButton }) => {
-  const scale = useSharedValue(1);
-  const savedScale = useSharedValue(1);
-  const translateX = useSharedValue(0);
-  const translateY = useSharedValue(0);
-  const savedX = useSharedValue(0);
-  const savedY = useSharedValue(0);
-  const focalX = useSharedValue(0);
-  const focalY = useSharedValue(0);
 
-  const pinchRef = useRef();
-  const panRef = useRef();
 
-  // Clamp translation so image never goes out of viewport bounds
-  const clampTranslation = (tx, ty, currentScale) => {
-    'worklet';
-    const maxX = ((currentScale - 1) * IMAGE_WIDTH) / 2;
-    const maxY = ((currentScale - 1) * IMAGE_HEIGHT) / 2;
-    return {
-      x: Math.min(Math.max(tx, -maxX), maxX),
-      y: Math.min(Math.max(ty, -maxY), maxY),
+const ZoomablePageItem = React.memo(
+  ({ item, renderBoxes, renderHighlights, renderBackButton }) => {
+
+    // ── Shared values (all worklet-safe) ──────
+    const scale      = useSharedValue(1);
+    const savedScale = useSharedValue(1);
+
+    const translateX = useSharedValue(0);
+    const translateY = useSharedValue(0);
+    const savedX     = useSharedValue(0);
+    const savedY     = useSharedValue(0);
+
+    // focal point captured at pinch start
+    const originX = useSharedValue(0);
+    const originY = useSharedValue(0);
+
+    // ── Helpers (worklets) ────────────────────
+    const clamp = (value, min, max) => {
+      'worklet';
+      return Math.min(Math.max(value, min), max);
     };
-  };
 
-  const pinchHandler = useAnimatedGestureHandler({
-    onStart: (event) => {
-      focalX.value = event.focalX;
-      focalY.value = event.focalY;
-      savedScale.value = scale.value;
-      savedX.value = translateX.value;
-      savedY.value = translateY.value;
-    },
-    onActive: (event) => {
-      const nextScale = Math.min(Math.max(savedScale.value * event.scale, MIN_SCALE), MAX_SCALE);
+    const clampTranslation = (tx, ty, s) => {
+      'worklet';
+      const maxX = ((s - 1) * IMAGE_WIDTH)  / 2;
+      const maxY = ((s - 1) * IMAGE_HEIGHT) / 2;
+      return {
+        x: clamp(tx, -maxX, maxX),
+        y: clamp(ty, -maxY, maxY),
+      };
+    };
 
-      // Focal point adjustment so zoom targets pinch center
-      const originX = focalX.value - IMAGE_WIDTH / 2;
-      const originY = focalY.value - IMAGE_HEIGHT / 2;
-
-      const scaleDiff = nextScale / savedScale.value;
-      const newTx = savedX.value + (originX - savedX.value) * (1 - scaleDiff);
-      const newTy = savedY.value + (originY - savedY.value) * (1 - scaleDiff);
-
-      scale.value = nextScale;
-      const clamped = clampTranslation(newTx, newTy, nextScale);
-      translateX.value = clamped.x;
-      translateY.value = clamped.y;
-    },
-    onEnd: () => {
-      savedScale.value = scale.value;
-      savedX.value = translateX.value;
-      savedY.value = translateY.value;
-
-      // Snap back to 1 if scale went below 1
-      if (scale.value <= 1) {
-        scale.value = withTiming(1);
-        translateX.value = withTiming(0);
-        translateY.value = withTiming(0);
-        savedScale.value = 1;
-        savedX.value = 0;
-        savedY.value = 0;
-      }
-    },
-  });
-
-  const panHandler = useAnimatedGestureHandler({
-    onStart: () => {
-      savedX.value = translateX.value;
-      savedY.value = translateY.value;
-    },
-    onActive: (event) => {
-      if (scale.value <= 1) return;
-      const clamped = clampTranslation(
-        savedX.value + event.translationX,
-        savedY.value + event.translationY,
-        scale.value
-      );
-      translateX.value = clamped.x;
-      translateY.value = clamped.y;
-    },
-    onEnd: () => {
-      savedX.value = translateX.value;
-      savedY.value = translateY.value;
-    },
-  });
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: translateX.value },
-      { translateY: translateY.value },
-      { scale: scale.value },
-    ],
-  }));
-
-  // Double tap to reset zoom
-  const doubleTapHandler = useAnimatedGestureHandler({
-    onActive: () => {
-      scale.value = withTiming(1);
+    const resetZoom = () => {
+      'worklet';
+      scale.value      = withTiming(1);
       translateX.value = withTiming(0);
       translateY.value = withTiming(0);
       savedScale.value = 1;
-      savedX.value = 0;
-      savedY.value = 0;
-    },
-  });
+      savedX.value     = 0;
+      savedY.value     = 0;
+    };
 
-  return (
-    <View style={{ height: ITEM_HEIGHT, alignItems: 'center' }}>
-      <PinchGestureHandler
-        ref={pinchRef}
-        onGestureEvent={pinchHandler}
-        simultaneousHandlers={panRef}
-      >
-        <Animated.View style={{ width: IMAGE_WIDTH, height: IMAGE_HEIGHT }}>
-          <PanGestureHandler
-            ref={panRef}
-            onGestureEvent={panHandler}
-            simultaneousHandlers={pinchRef}
-            minPointers={2}
-            maxPointers={2}
-            avgTouches
-          >
-            <Animated.View
-              style={[{ width: IMAGE_WIDTH, height: IMAGE_HEIGHT }, animatedStyle]}
-            >
-              <Image source={item.source} style={styles.image} resizeMode="contain" />
-              {renderBoxes()}
-              {renderHighlights()}
-              {renderBackButton()}
-            </Animated.View>
-          </PanGestureHandler>
-        </Animated.View>
-      </PinchGestureHandler>
-    </View>
-  );
-});
+    // ── Pinch gesture ─────────────────────────
+    const pinchGesture = Gesture.Pinch()
+      .onStart((e) => {
+        // Save the focal point relative to image center
+        // e.focalX / e.focalY are in the View's coordinate space
+        originX.value = e.focalX - IMAGE_WIDTH  / 2;
+        originY.value = e.focalY - IMAGE_HEIGHT / 2;
+
+        savedScale.value = scale.value;
+        savedX.value     = translateX.value;
+        savedY.value     = translateY.value;
+      })
+      .onUpdate((e) => {
+        const next = clamp(savedScale.value * e.scale, MIN_SCALE, MAX_SCALE);
+
+        // Adjust translation so zoom pivots on the focal point
+        const scaleDiff = next / savedScale.value;
+        const newTx = savedX.value + (originX.value - savedX.value) * (1 - scaleDiff);
+        const newTy = savedY.value + (originY.value - savedY.value) * (1 - scaleDiff);
+
+        scale.value = next;
+        const clamped   = clampTranslation(newTx, newTy, next);
+        translateX.value = clamped.x;
+        translateY.value = clamped.y;
+      })
+      .onEnd(() => {
+        savedScale.value = scale.value;
+        savedX.value     = translateX.value;
+        savedY.value     = translateY.value;
+
+        if (scale.value <= 1) {
+          resetZoom();
+        }
+      });
+
+    // ── Pan gesture ───────────────────────────
+    // Only active when zoomed in (scale > 1)
+    // minPointers(2) keeps single-finger scroll
+    // working on the FlatList
+    const panGesture = Gesture.Pan()
+      .minPointers(2)
+      .maxPointers(2)
+      .onStart(() => {
+        savedX.value = translateX.value;
+        savedY.value = translateY.value;
+      })
+      .onUpdate((e) => {
+        if (scale.value <= 1) return;
+        const clamped    = clampTranslation(
+          savedX.value + e.translationX,
+          savedY.value + e.translationY,
+          scale.value,
+        );
+        translateX.value = clamped.x;
+        translateY.value = clamped.y;
+      })
+      .onEnd(() => {
+        savedX.value = translateX.value;
+        savedY.value = translateY.value;
+      });
+
+    // ── Double-tap to reset ───────────────────
+    const doubleTap = Gesture.Tap()
+      .numberOfTaps(2)
+      .onEnd(() => {
+        resetZoom();
+      });
+
+    // ── Compose gestures ──────────────────────
+    // Pinch + Pan run simultaneously (two-finger zoom-pan)
+    // doubleTap is separate
+    const combinedGesture = Gesture.Race(
+      doubleTap,
+      Gesture.Simultaneous(pinchGesture, panGesture),
+    );
+
+    // ── Animated style ────────────────────────
+    const animatedStyle = useAnimatedStyle(() => ({
+      transform: [
+        { translateX: translateX.value },
+        { translateY: translateY.value },
+        { scale: scale.value },
+      ],
+    }));
+
+    return (
+      <View style={styles.itemContainer}>
+        <GestureDetector gesture={combinedGesture}>
+          <Animated.View style={[styles.imageContainer, animatedStyle]}>
+            <Image
+              source={item.source}
+              style={styles.image}
+              resizeMode="contain"
+            />
+            {/* Boxes and highlights live inside the zoomed view
+                so they scale and pan with the image */}
+            {renderBoxes()}
+            {renderHighlights()}
+            {renderBackButton()}
+          </Animated.View>
+        </GestureDetector>
+      </View>
+    );
+  },
+);
 
 // ─────────────────────────────────────────────
-// Main Component
+// Main Screen
 // ─────────────────────────────────────────────
 const QuranViewer = () => {
   const route = useRoute();
   const { imageId = null, juzId = null } = route.params || {};
-  const [searchInput, setSearchInput] = useState('');
-  const flatListRef = useRef(null);
 
-  const [boxPositions, setBoxPositions] = useState({});
+  const [searchInput, setSearchInput]         = useState('');
+  const flatListRef                            = useRef(null);
+  const [boxPositions, setBoxPositions]       = useState({});
   const [highlightPositions, setHighlightPositions] = useState({});
-  const [isEditingBox, setIsEditingBox] = useState(false);
+  const [isEditingBox, setIsEditingBox]       = useState(false);
   const [isEditingHighlight, setIsEditingHighlight] = useState(false);
-  const [prevPageId, setPrevPageId] = useState(null);
-  const [activeHighlights, setActiveHighlights] = useState({ pageId: null, highlightIds: [] });
+  const [prevPageId, setPrevPageId]           = useState(null);
+  const [activeHighlights, setActiveHighlights] = useState({
+    pageId: null,
+    highlightIds: [],
+  });
 
-  // ── Save last page ──
+  // ── Restore / save last page ───────────────
   const onViewableItemsChanged = useCallback(({ viewableItems }) => {
     if (viewableItems?.length > 0) {
-      AsyncStorage.setItem(LAST_PAGE_KEY, JSON.stringify({ id: viewableItems[0].item.id }));
+      AsyncStorage.setItem(
+        LAST_PAGE_KEY,
+        JSON.stringify({ id: viewableItems[0].item.id }),
+      );
     }
   }, []);
 
   const handleScrollEnd = async (event) => {
     const offsetY = event.nativeEvent.contentOffset.y;
-    const index = Math.round(offsetY / ITEM_HEIGHT);
+    const index   = Math.round(offsetY / ITEM_HEIGHT);
     if (images[index]) {
-      await AsyncStorage.setItem(LAST_PAGE_KEY, JSON.stringify({ id: images[index].id }));
+      await AsyncStorage.setItem(
+        LAST_PAGE_KEY,
+        JSON.stringify({ id: images[index].id }),
+      );
     }
   };
 
-  const getIndexById = useCallback((pageId) => images.findIndex((img) => img.id === pageId), []);
+  // ── Scroll helpers ─────────────────────────
+  const getIndexById = useCallback(
+    (pageId) => images.findIndex((img) => img.id === pageId),
+    [],
+  );
 
-  const scrollToPage = (pageId, highlightIds = []) => {
-    const index = getIndexById(pageId);
-    if (index !== -1 && flatListRef.current) {
-      flatListRef.current.scrollToOffset({ offset: ITEM_HEIGHT * index, animated: true });
-      setActiveHighlights({ pageId, highlightIds });
-      setTimeout(() => setActiveHighlights({ pageId: null, highlightIds: [] }), 8000);
-    }
-  };
+  const scrollToPage = useCallback(
+    (pageId, highlightIds = []) => {
+      const index = getIndexById(pageId);
+      if (index !== -1 && flatListRef.current) {
+        flatListRef.current.scrollToOffset({
+          offset: ITEM_HEIGHT * index,
+          animated: true,
+        });
+        setActiveHighlights({ pageId, highlightIds });
+        setTimeout(
+          () => setActiveHighlights({ pageId: null, highlightIds: [] }),
+          8000,
+        );
+      }
+    },
+    [getIndexById],
+  );
 
-  // ── Navigate on mount ──
+  // ── Navigate on mount if params provided ───
   useEffect(() => {
     const targetId = imageId ?? juzId;
     if (targetId !== null && flatListRef.current) {
       const index = images.findIndex((img) => img.id === targetId);
       if (index !== -1) {
-        setTimeout(() => flatListRef.current.scrollToIndex({ index, animated: true }), 500);
+        setTimeout(
+          () => flatListRef.current.scrollToIndex({ index, animated: true }),
+          500,
+        );
       }
     }
   }, [imageId, juzId]);
 
-  // ── Load box/highlight positions from JSON ──
+  // ── Load positions from JSON ───────────────
   useEffect(() => {
-    const boxPos = {};
+    const boxPos       = {};
     const highlightPos = {};
     pageData.forEach((page) => {
-      (page.boxes || []).forEach((box) => { boxPos[box.id] = { x: box.x, y: box.y }; });
-      (page.highlights || []).forEach((hl) => { highlightPos[hl.id] = { x: hl.x, y: hl.y }; });
+      (page.boxes      || []).forEach((box) => { boxPos[box.id]       = { x: box.x, y: box.y }; });
+      (page.highlights || []).forEach((hl)  => { highlightPos[hl.id]  = { x: hl.x,  y: hl.y  }; });
     });
     setBoxPositions(boxPos);
     setHighlightPositions(highlightPos);
   }, []);
 
+  // ── Search ─────────────────────────────────
   const handleSearch = () => {
-    const targetId = parseInt(searchInput);
-    if (isNaN(targetId)) { Alert.alert('Invalid Input', 'Please enter a valid page ID'); return; }
+    const targetId = parseInt(searchInput, 10);
+    if (isNaN(targetId)) {
+      Alert.alert('Invalid Input', 'Please enter a valid page ID');
+      return;
+    }
     const index = images.findIndex((img) => img.id === targetId);
     if (index !== -1 && flatListRef.current) {
       flatListRef.current.scrollToIndex({ index, animated: true });
@@ -2797,119 +2834,141 @@ const QuranViewer = () => {
     }
   };
 
-  // ─── Draggable Box ───
-  const renderDraggableBox = useCallback((pageId, box) => {
-    const boxKey = box.id;
-    const position = boxPositions?.[boxKey] || { x: 100, y: 100 };
+  // ── Draggable Box ──────────────────────────
+  const renderDraggableBox = useCallback(
+    (pageId, box) => {
+      const boxKey  = box.id;
+      const position = boxPositions?.[boxKey] || { x: 100, y: 100 };
 
-    const panResponder = PanResponder.create({
-      onStartShouldSetPanResponder: () => isEditingBox,
-      onPanResponderMove: (_, gesture) => {
-        if (!isEditingBox) return;
-        setBoxPositions((prev) => ({
-          ...prev,
-          [boxKey]: { x: position.x + gesture.dx, y: position.y + gesture.dy },
-        }));
-      },
-    });
+      const panResponder = PanResponder.create({
+        onStartShouldSetPanResponder: () => isEditingBox,
+        onPanResponderMove: (_, gesture) => {
+          if (!isEditingBox) return;
+          setBoxPositions((prev) => ({
+            ...prev,
+            [boxKey]: {
+              x: position.x + gesture.dx,
+              y: position.y + gesture.dy,
+            },
+          }));
+        },
+      });
 
-    return (
-      <View
-        key={`box-${boxKey}`}
-        style={[
-          styles.box,
-          {
-            left: scaleX(position.x),
-            top: scaleY(position.y),
-            borderColor: isEditingBox ? 'blue' : 'transparent',
-          },
-        ]}
-        {...(isEditingBox ? panResponder.panHandlers : {})}
-      >
-        {isEditingBox ? (
-          <Text style={styles.boxText}>{box.targetPage}</Text>
-        ) : (
-          <TouchableOpacity
-            onPress={() => {
-              setPrevPageId(pageId);
-              scrollToPage(box.targetPage, box.highlightIds || []);
-            }}
-            style={styles.touchable}
-          />
-        )}
-      </View>
-    );
-  }, [boxPositions, isEditingBox, scrollToPage]);
+      return (
+        <View
+          key={`box-${boxKey}`}
+          style={[
+            styles.box,
+            {
+              left:        scaleX(position.x),
+              top:         scaleY(position.y),
+              borderColor: isEditingBox ? 'blue' : 'black',
+            },
+          ]}
+          {...(isEditingBox ? panResponder.panHandlers : {})}
+        >
+          {isEditingBox ? (
+            <Text style={styles.boxText}>{box.targetPage}</Text>
+          ) : (
+            <TouchableOpacity
+              onPress={() => {
+                setPrevPageId(pageId);
+                scrollToPage(box.targetPage, box.highlightIds || []);
+              }}
+              style={styles.touchable}
+            />
+          )}
+        </View>
+      );
+    },
+    [boxPositions, isEditingBox, scrollToPage],
+  );
 
-  // ─── Highlight ───
-  const renderHighlightLine = useCallback((pageId, hl) => {
-    const hlKey = hl.id;
-    const position = highlightPositions[hlKey] || { x: 30, y: 150 };
+  // ── Highlight line ─────────────────────────
+  const renderHighlightLine = useCallback(
+    (pageId, hl) => {
+      const hlKey    = hl.id;
+      const position = highlightPositions[hlKey] || { x: 30, y: 150 };
 
-    const panResponder = PanResponder.create({
-      onStartShouldSetPanResponder: () => isEditingHighlight,
-      onPanResponderMove: (_, gesture) => {
-        setHighlightPositions((prev) => ({
-          ...prev,
-          [hlKey]: { x: position.x + gesture.dx, y: position.y + gesture.dy },
-        }));
-      },
-    });
+      const panResponder = PanResponder.create({
+        onStartShouldSetPanResponder: () => isEditingHighlight,
+        onPanResponderMove: (_, gesture) => {
+          setHighlightPositions((prev) => ({
+            ...prev,
+            [hlKey]: {
+              x: position.x + gesture.dx,
+              y: position.y + gesture.dy,
+            },
+          }));
+        },
+      });
 
-    const isActive =
-      activeHighlights.pageId === pageId && activeHighlights.highlightIds.includes(hl.id);
+      const isActive =
+        activeHighlights.pageId === pageId &&
+        activeHighlights.highlightIds.includes(hl.id);
 
-    if (!isEditingHighlight && !isActive) return null;
+      if (!isEditingHighlight && !isActive) return null;
 
-    return (
-      <View
-        key={`hl-${hlKey}`}
-        style={[
-          styles.highlight,
-          {
-            left: scaleX(position.x),
-            top: scaleY(position.y),
-            width: scaleX(235),
-            height: scaleY(27),
-            borderColor: isEditingHighlight ? 'red' : 'transparent',
-            backgroundColor: isActive ? 'yellow' : 'transparent',
-            opacity: isActive ? 0.4 : 0.2,
-          },
-        ]}
-        {...(isEditingHighlight ? panResponder.panHandlers : {})}
-      />
-    );
-  }, [highlightPositions, isEditingHighlight, activeHighlights]);
+      return (
+        <View
+          key={`hl-${hlKey}`}
+          style={[
+            styles.highlight,
+            {
+              left:            scaleX(position.x),
+              top:             scaleY(position.y),
+              width:           scaleX(235),
+              height:          scaleY(27),
+              borderColor:     isEditingHighlight ? 'red' : 'transparent',
+              backgroundColor: isActive ? 'yellow' : 'transparent',
+              opacity:         isActive ? 0.4 : 0.2,
+            },
+          ]}
+          {...(isEditingHighlight ? panResponder.panHandlers : {})}
+        />
+      );
+    },
+    [highlightPositions, isEditingHighlight, activeHighlights],
+  );
 
-  // ─── Back Button ───
-  const renderBackButton = useCallback((currentPageId) =>
-    prevPageId && currentPageId !== prevPageId ? (
-      <TouchableOpacity
-        onPress={() => { scrollToPage(prevPageId); setPrevPageId(null); }}
-        style={styles.backButton}
-      >
-        <Text style={styles.backText}>← Back</Text>
-      </TouchableOpacity>
-    ) : null,
-  [prevPageId, scrollToPage]);
+  // ── Back button ────────────────────────────
+  const renderBackButton = useCallback(
+    (currentPageId) =>
+      prevPageId && currentPageId !== prevPageId ? (
+        <TouchableOpacity
+          onPress={() => {
+            scrollToPage(prevPageId);
+            setPrevPageId(null);
+          }}
+          style={styles.backButton}
+        >
+          <Text style={styles.backText}>← Back</Text>
+        </TouchableOpacity>
+      ) : null,
+    [prevPageId, scrollToPage],
+  );
 
-  // ─── Render Item ───
-  const renderItem = useCallback(({ item }) => {
-    const pageId = item.id;
-    const pageDataEntry = pageData.find((p) => p.id === item.id) || {};
-    const boxList = pageDataEntry.boxes || [];
-    const highlightList = pageDataEntry.highlights || [];
+  // ── Render FlatList item ───────────────────
+  const renderItem = useCallback(
+    ({ item }) => {
+      const pageId       = item.id;
+      const entry        = pageData.find((p) => p.id === item.id) || {};
+      const boxList      = entry.boxes      || [];
+      const highlightList = entry.highlights || [];
 
-    return (
-      <ZoomablePageItem
-        item={item}
-        renderBoxes={() => boxList.map((box) => renderDraggableBox(pageId, box))}
-        renderHighlights={() => highlightList.map((hl) => renderHighlightLine(pageId, hl))}
-        renderBackButton={() => renderBackButton(pageId)}
-      />
-    );
-  }, [renderDraggableBox, renderHighlightLine, renderBackButton]);
+      return (
+        <ZoomablePageItem
+          item={item}
+          renderBoxes={()        => boxList.map((box) => renderDraggableBox(pageId, box))}
+          renderHighlights={()   => highlightList.map((hl) => renderHighlightLine(pageId, hl))}
+          renderBackButton={()   => renderBackButton(pageId)}
+        />
+      );
+    },
+    [renderDraggableBox, renderHighlightLine, renderBackButton],
+  );
 
+  // ─────────────────────────────────────────────
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       {/* Background */}
@@ -2934,13 +2993,17 @@ const QuranViewer = () => {
             returnKeyType="search"
             onSubmitEditing={handleSearch}
           />
-          <TouchableOpacity style={styles.searchButton} onPress={handleSearch} activeOpacity={0.7}>
+          <TouchableOpacity
+            style={styles.searchButton}
+            onPress={handleSearch}
+            activeOpacity={0.7}
+          >
             <Text style={styles.searchButtonText}>Go</Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* List */}
+      {/* Page List */}
       <FlatList
         ref={flatListRef}
         data={images}
@@ -2954,19 +3017,37 @@ const QuranViewer = () => {
         initialNumToRender={3}
         maxToRenderPerBatch={3}
         windowSize={5}
-        removeClippedSubviews={true}
+        removeClippedSubviews
         scrollEventThrottle={16}
         viewabilityConfig={{ itemVisiblePercentThreshold: 60 }}
         onViewableItemsChanged={onViewableItemsChanged}
         onMomentumScrollEnd={handleScrollEnd}
-        // Allow FlatList scroll only when not pinching inside an item
-        scrollEnabled={true}
       />
     </GestureHandlerRootView>
   );
 };
 
+// ─────────────────────────────────────────────
+// Styles
+// ─────────────────────────────────────────────
 const styles = StyleSheet.create({
+  itemContainer: {
+    height: ITEM_HEIGHT,
+    alignItems: 'center',
+    // overflow hidden so a zoomed page doesn't bleed onto neighbours
+    overflow: 'hidden',
+  },
+  imageContainer: {
+    width: IMAGE_WIDTH,
+    height: IMAGE_HEIGHT,
+  },
+  touchable: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    width: '100%',
+    height: '100%',
+  },
   searchContainer: {
     padding: 10,
     backgroundColor: '#f9f9f9',
@@ -2975,13 +3056,6 @@ const styles = StyleSheet.create({
   searchRow: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  touchable: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    width: '100%',
-    height: '100%',
   },
   searchInput: {
     flex: 1,
