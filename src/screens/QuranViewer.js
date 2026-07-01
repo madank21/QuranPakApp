@@ -2903,11 +2903,11 @@ const QuranViewer = () => {
         },
       });
 
-      const isActive =
-        activeHighlights.pageId === pageId &&
-        activeHighlights.highlightIds.includes(hl.id);
+      const isActive = true;
+        // activeHighlights.pageId === pageId &&
+        // activeHighlights.highlightIds.includes(hl.id);
 
-      if (!isEditingHighlight && !isActive) return null;
+      //if (!isEditingHighlight && !isActive) return null;
 
       return (
         <View
@@ -2925,7 +2925,21 @@ const QuranViewer = () => {
             },
           ]}
           {...(isEditingHighlight ? panResponder.panHandlers : {})}
-        />
+        >
+        {!isEditingHighlight && (
+      <Text
+        style={{
+          color: 'red',
+          fontWeight: 'bold',
+          fontSize: 15,
+          alignSelf: 'center', 
+        }}
+      >
+        {hl.id}
+      </Text>
+    )}
+     </View>
+        
       );
     },
     [highlightPositions, isEditingHighlight, activeHighlights],
@@ -3122,3 +3136,8 @@ const styles = StyleSheet.create({
 });
 
 export default QuranViewer;
+
+
+
+
+
