@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
@@ -20,6 +21,7 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
+  withDecay,
   runOnJS,
 } from 'react-native-reanimated';
 import pageData from '../assets/pageData.json';
@@ -27,8 +29,6 @@ import { useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 
-// ─────────────────────────────────────────────
-// Constants
 // ─────────────────────────────────────────────
 const { width, height } = Dimensions.get('window');
 const IMAGE_WIDTH = width * 0.9;
@@ -2578,30 +2578,22 @@ const images = [
 
 
 ]
-// ─────────────────────────────────────────────
-// Simple Page Item (no zoom logic)
-// ─────────────────────────────────────────────
-const PageItem = React.memo(
-  ({ item, renderBoxes, renderHighlights, renderBackButton }) => {
-    return (
-      <View style={styles.itemContainer}>
-        <View style={styles.imageContainer}>
-          <Image
-            source={item.source}
-            style={styles.image}
-            resizeMode="contain"
-          />
-          {renderBoxes()}
-          {renderHighlights()}
-          {renderBackButton()}
-        </View>
-      </View>
-    );
-  },
-);
+
 
 // ─────────────────────────────────────────────
-// Main Screen
+const PageItem = React.memo(
+  ({ item, renderBoxes, renderHighlights, renderBackButton }) => (
+    <View style={styles.itemContainer}>
+      <View style={styles.imageContainer}>
+        <Image source={item.source} style={styles.image} resizeMode="contain" />
+        {renderBoxes()}
+        {renderHighlights()}
+        {renderBackButton()}
+      </View>
+    </View>
+  ),
+);
+
 // ─────────────────────────────────────────────
 const QuranViewer = () => {
   const route = useRoute();
@@ -2619,7 +2611,7 @@ const QuranViewer = () => {
     highlightIds: [],
   });
 
-  // ── Global zoom shared values ──────────────
+  // ── Zoom state ─────────────────────────────
   const scale      = useSharedValue(1);
   const savedScale = useSharedValue(1);
   const translateX = useSharedValue(0);
@@ -2628,187 +2620,170 @@ const QuranViewer = () => {
   const savedY     = useSharedValue(0);
   const originX    = useSharedValue(0);
   const originY    = useSharedValue(0);
+  const isZoomed   = useSharedValue(false);
 
-  // ── FlatList scroll offset (manual) ────────
-  // We drive FlatList scrolling ourselves so we
-  // can intercept it when zoomed in.
-  const scrollOffset    = useSharedValue(0);   // current Y offset
-  const savedScrollOffset = useSharedValue(0); // offset at pan start
-  const totalListHeight = images.length * ITEM_HEIGHT;
-
-  // JS-side scroll offset mirror (for scrollToOffset calls)
-  const scrollOffsetJS = useRef(0);
-
-  // ── Scroll the FlatList from worklet thread ─
-  const scrollFlatList = useCallback((offset) => {
-    if (flatListRef.current) {
-      flatListRef.current.scrollToOffset({ offset, animated: false });
-    }
-  }, []);
+  // JS-side mirror for scrollEnabled prop
+  const [scrollEnabled, setScrollEnabled] = useState(true);
 
   // ─────────────────────────────────────────────
-  // Worklet helpers
-  // ─────────────────────────────────────────────
-  const clamp = (value, min, max) => {
+  const clamp = (v, min, max) => {
     'worklet';
-    return Math.min(Math.max(value, min), max);
+    return Math.min(Math.max(v, min), max);
+  };
+
+  // When zoomed, the entire FlatList is scaled up.
+  // The total content size becomes bigger, so we need
+  // to allow panning further.
+  const getContentHeight = () => {
+    'worklet';
+    return images.length * ITEM_HEIGHT;
   };
 
   const clampTranslation = (tx, ty, s) => {
     'worklet';
-    const maxX = ((s - 1) * width)  / 2;
-    const maxY = ((s - 1) * height) / 2;
+    // Horizontal: image centered, so max pan = half the extra width
+    const maxX = ((s - 1) * width) / 2;
+
+    // Vertical: the scaled content is taller than the viewport.
+    // Allow panning from top of first page to bottom of last page.
+    const scaledContentH = getContentHeight() * s;
+    const viewportH = height; // approximate visible area
+    const maxYTop = ((s - 1) * viewportH) / 2;
+    const maxYBottom = scaledContentH - viewportH - maxYTop;
+
     return {
       x: clamp(tx, -maxX, maxX),
-      y: clamp(ty, -maxY, maxY),
+      y: clamp(ty, -Math.max(maxYTop, maxYBottom), maxYTop),
     };
+  };
+
+  const updateScrollEnabled = (zoomed) => {
+    'worklet';
+    if (isZoomed.value !== zoomed) {
+      isZoomed.value = zoomed;
+      runOnJS(setScrollEnabled)(!zoomed);
+    }
   };
 
   const resetZoom = () => {
     'worklet';
-    scale.value      = withTiming(1);
-    translateX.value = withTiming(0);
-    translateY.value = withTiming(0);
+    scale.value      = withTiming(1, { duration: 250 });
+    translateX.value = withTiming(0, { duration: 250 });
+    translateY.value = withTiming(0, { duration: 250 });
     savedScale.value = 1;
     savedX.value     = 0;
     savedY.value     = 0;
+    updateScrollEnabled(false);
   };
 
-  // ─────────────────────────────────────────────
-  // PINCH — zoom the whole list
-  // ─────────────────────────────────────────────
+  // ── PINCH ──────────────────────────────────
   const pinchGesture = Gesture.Pinch()
     .onStart((e) => {
-      originX.value    = e.focalX - width  / 2;
+      originX.value    = e.focalX - width / 2;
       originY.value    = e.focalY - height / 2;
       savedScale.value = scale.value;
       savedX.value     = translateX.value;
       savedY.value     = translateY.value;
     })
     .onUpdate((e) => {
-      const next      = clamp(savedScale.value * e.scale, MIN_SCALE, MAX_SCALE);
-      const scaleDiff = next / savedScale.value;
+      const next = clamp(savedScale.value * e.scale, MIN_SCALE, MAX_SCALE);
+      const diff = next / savedScale.value;
 
-      const newTx = savedX.value + (originX.value - savedX.value) * (1 - scaleDiff);
-      const newTy = savedY.value + (originY.value - savedY.value) * (1 - scaleDiff);
+      const newTx = savedX.value + (originX.value - savedX.value) * (1 - diff);
+      const newTy = savedY.value + (originY.value - savedY.value) * (1 - diff);
 
       scale.value = next;
-      const clamped    = clampTranslation(newTx, newTy, next);
-      translateX.value = clamped.x;
-      translateY.value = clamped.y;
+      const c = clampTranslation(newTx, newTy, next);
+      translateX.value = c.x;
+      translateY.value = c.y;
+
+      updateScrollEnabled(next > 1.05);
     })
     .onEnd(() => {
       savedScale.value = scale.value;
       savedX.value     = translateX.value;
       savedY.value     = translateY.value;
-
-      if (scale.value <= 1) {
-        resetZoom();
-      }
+      if (scale.value <= 1.05) resetZoom();
     });
 
-  // ─────────────────────────────────────────────
-  // PAN — single finger
-  //   • scale == 1  →  scroll the FlatList (vertical only)
-  //   • scale >  1  →  pan the zoomed view (x + y)
-  // ─────────────────────────────────────────────
+  // ── PAN (only when zoomed) ─────────────────
+  // activeOffsetX/Y ensures small movements don't
+  // steal from FlatList's native scroll.
   const panGesture = Gesture.Pan()
     .minPointers(1)
-    .maxPointers(1)             // single finger only
-    .onStart(() => {
-      savedX.value            = translateX.value;
-      savedY.value            = translateY.value;
-      savedScrollOffset.value = scrollOffset.value;
-    })
-    .onUpdate((e) => {
-      if (scale.value <= 1) {
-        // ── Normal scroll mode ──────────────────
-        // Invert dy: drag up → scroll down
-        const maxScroll = totalListHeight - height;
-        const newOffset = clamp(
-          savedScrollOffset.value - e.translationY,
-          0,
-          maxScroll,
-        );
-        scrollOffset.value = newOffset;
-        runOnJS(scrollFlatList)(newOffset);
-      } else {
-        // ── Zoomed pan mode ─────────────────────
-        const clamped    = clampTranslation(
-          savedX.value + e.translationX,
-          savedY.value + e.translationY,
-          scale.value,
-        );
-        translateX.value = clamped.x;
-        translateY.value = clamped.y;
-      }
-    })
-    .onEnd((e) => {
-      if (scale.value <= 1) {
-        // ── Momentum scroll (simple) ────────────
-        // Apply a fraction of the velocity so it
-        // feels natural after lifting the finger.
-        const friction  = 0.3;           // tune 0.1–0.5
-        const maxScroll = totalListHeight - height;
-        const momentum  = -e.velocityY * friction;
-        const newOffset = clamp(scrollOffset.value + momentum, 0, maxScroll);
-
-        scrollOffset.value = newOffset;
-        runOnJS(scrollFlatList)(newOffset);
-      } else {
-        savedX.value = translateX.value;
-        savedY.value = translateY.value;
-      }
-    });
-
-  // ── Two-finger pan while zoomed (optional extra) ─
-  // Lets two fingers also pan when zoomed, covers
-  // the case where user pinches and then drags.
-  const twoFingerPan = Gesture.Pan()
-    .minPointers(2)
     .maxPointers(2)
+    .activeOffsetX([-15, 15])
+    .activeOffsetY([-15, 15])
+    .enabled(true)
     .onStart(() => {
+      if (scale.value <= 1.05) return;
       savedX.value = translateX.value;
       savedY.value = translateY.value;
     })
     .onUpdate((e) => {
-      if (scale.value <= 1) return;
-      const clamped    = clampTranslation(
+      if (scale.value <= 1.05) return;
+      const c = clampTranslation(
         savedX.value + e.translationX,
         savedY.value + e.translationY,
         scale.value,
       );
-      translateX.value = clamped.x;
-      translateY.value = clamped.y;
+      translateX.value = c.x;
+      translateY.value = c.y;
     })
-    .onEnd(() => {
+    .onEnd((e) => {
+      if (scale.value <= 1.05) return;
       savedX.value = translateX.value;
       savedY.value = translateY.value;
+
+      // Smooth deceleration with decay
+      const c = clampTranslation(translateX.value, translateY.value, scale.value);
+      translateX.value = withDecay({
+        velocity: e.velocityX,
+        clamp: [-(((scale.value - 1) * width) / 2), ((scale.value - 1) * width) / 2],
+      });
+      translateY.value = withDecay({
+        velocity: e.velocityY,
+        clamp: [c.y - 200, c.y + 200], // approximate bounds
+      });
     });
 
-  // ── Double-tap to reset ────────────────────
+  // ── DOUBLE TAP ─────────────────────────────
   const doubleTap = Gesture.Tap()
     .numberOfTaps(2)
-    .onEnd(() => {
-      resetZoom();
+    .onEnd((e) => {
+      if (scale.value > 1.05) {
+        // Already zoomed → reset
+        resetZoom();
+      } else {
+        // Not zoomed → zoom to 2.5x at tap point
+        const targetScale = 2.5;
+        const focalX = e.x - width / 2;
+        const focalY = e.y - height / 2;
+
+        const newTx = focalX * (1 - targetScale);
+        const newTy = focalY * (1 - targetScale);
+
+        const c = clampTranslation(newTx, newTy, targetScale);
+
+        scale.value      = withTiming(targetScale, { duration: 300 });
+        translateX.value = withTiming(c.x, { duration: 300 });
+        translateY.value = withTiming(c.y, { duration: 300 });
+        savedScale.value = targetScale;
+        savedX.value     = c.x;
+        savedY.value     = c.y;
+
+        updateScrollEnabled(true);
+      }
     });
 
-  // ── Compose all gestures ───────────────────
-  //
-  //  Race(
-  //    doubleTap,
-  //    Simultaneous(
-  //      pinch,
-  //      twoFingerPan,   ← handles two-finger pan while zoomed
-  //      panGesture,     ← handles one-finger scroll / pan
-  //    )
-  //  )
+  // ── COMPOSE ────────────────────────────────
+  // doubleTap is exclusive (Race), pinch+pan run together
   const combinedGesture = Gesture.Race(
     doubleTap,
-    Gesture.Simultaneous(pinchGesture, twoFingerPan, panGesture),
+    Gesture.Simultaneous(pinchGesture, panGesture),
   );
 
-  // ── Animated style ─────────────────────────
+  // ── ANIMATED STYLE ─────────────────────────
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
       { translateX: translateX.value },
@@ -2818,23 +2793,8 @@ const QuranViewer = () => {
   }));
 
   // ─────────────────────────────────────────────
-  // Keep JS scroll offset mirror in sync
-  // (needed for programmatic scrollToPage calls)
+  // Original logic (unchanged)
   // ─────────────────────────────────────────────
-  const handleScrollEnd = async (event) => {
-    const offsetY = event.nativeEvent.contentOffset.y;
-    scrollOffsetJS.current = offsetY;
-    scrollOffset.value     = offsetY;
-
-    const index = Math.round(offsetY / ITEM_HEIGHT);
-    if (images[index]) {
-      await AsyncStorage.setItem(
-        LAST_PAGE_KEY,
-        JSON.stringify({ id: images[index].id }),
-      );
-    }
-  };
-
   const onViewableItemsChanged = useCallback(({ viewableItems }) => {
     if (viewableItems?.length > 0) {
       AsyncStorage.setItem(
@@ -2844,9 +2804,17 @@ const QuranViewer = () => {
     }
   }, []);
 
-  // ─────────────────────────────────────────────
-  // Scroll helpers
-  // ─────────────────────────────────────────────
+  const handleScrollEnd = async (event) => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+    const index = Math.round(offsetY / ITEM_HEIGHT);
+    if (images[index]) {
+      await AsyncStorage.setItem(
+        LAST_PAGE_KEY,
+        JSON.stringify({ id: images[index].id }),
+      );
+    }
+  };
+
   const getIndexById = useCallback(
     (pageId) => images.findIndex((img) => img.id === pageId),
     [],
@@ -2856,10 +2824,10 @@ const QuranViewer = () => {
     (pageId, highlightIds = []) => {
       const index = getIndexById(pageId);
       if (index !== -1 && flatListRef.current) {
-        const offset = ITEM_HEIGHT * index;
-        flatListRef.current.scrollToOffset({ offset, animated: true });
-        scrollOffset.value   = offset;
-        scrollOffsetJS.current = offset;
+        flatListRef.current.scrollToOffset({
+          offset: ITEM_HEIGHT * index,
+          animated: true,
+        });
         setActiveHighlights({ pageId, highlightIds });
         setTimeout(
           () => setActiveHighlights({ pageId: null, highlightIds: [] }),
@@ -2870,7 +2838,6 @@ const QuranViewer = () => {
     [getIndexById],
   );
 
-  // ── Navigate on mount ──────────────────────
   useEffect(() => {
     const targetId = imageId ?? juzId;
     if (targetId !== null && flatListRef.current) {
@@ -2884,19 +2851,21 @@ const QuranViewer = () => {
     }
   }, [imageId, juzId]);
 
-  // ── Load positions from JSON ───────────────
   useEffect(() => {
-    const boxPos       = {};
+    const boxPos = {};
     const highlightPos = {};
     pageData.forEach((page) => {
-      (page.boxes      || []).forEach((box) => { boxPos[box.id]      = { x: box.x, y: box.y }; });
-      (page.highlights || []).forEach((hl)  => { highlightPos[hl.id] = { x: hl.x,  y: hl.y  }; });
+      (page.boxes || []).forEach((box) => {
+        boxPos[box.id] = { x: box.x, y: box.y };
+      });
+      (page.highlights || []).forEach((hl) => {
+        highlightPos[hl.id] = { x: hl.x, y: hl.y };
+      });
     });
     setBoxPositions(boxPos);
     setHighlightPositions(highlightPos);
   }, []);
 
-  // ── Search ─────────────────────────────────
   const handleSearch = () => {
     const targetId = parseInt(searchInput, 10);
     if (isNaN(targetId)) {
@@ -2912,34 +2881,28 @@ const QuranViewer = () => {
     }
   };
 
-  // ── Draggable Box ──────────────────────────
   const renderDraggableBox = useCallback(
     (pageId, box) => {
-      const boxKey   = box.id;
+      const boxKey = box.id;
       const position = boxPositions?.[boxKey] || { x: 100, y: 100 };
-
       const panResponder = PanResponder.create({
         onStartShouldSetPanResponder: () => isEditingBox,
         onPanResponderMove: (_, gesture) => {
           if (!isEditingBox) return;
           setBoxPositions((prev) => ({
             ...prev,
-            [boxKey]: {
-              x: position.x + gesture.dx,
-              y: position.y + gesture.dy,
-            },
+            [boxKey]: { x: position.x + gesture.dx, y: position.y + gesture.dy },
           }));
         },
       });
-
       return (
         <View
           key={`box-${boxKey}`}
           style={[
             styles.box,
             {
-              left:        scaleX(position.x),
-              top:         scaleY(position.y),
+              left: scaleX(position.x),
+              top: scaleY(position.y),
               borderColor: isEditingBox ? 'blue' : 'black',
             },
           ]}
@@ -2962,40 +2925,33 @@ const QuranViewer = () => {
     [boxPositions, isEditingBox, scrollToPage],
   );
 
-  // ── Highlight line ─────────────────────────
   const renderHighlightLine = useCallback(
     (pageId, hl) => {
-      const hlKey    = hl.id;
+      const hlKey = hl.id;
       const position = highlightPositions[hlKey] || { x: 30, y: 150 };
-
       const panResponder = PanResponder.create({
         onStartShouldSetPanResponder: () => isEditingHighlight,
         onPanResponderMove: (_, gesture) => {
           setHighlightPositions((prev) => ({
             ...prev,
-            [hlKey]: {
-              x: position.x + gesture.dx,
-              y: position.y + gesture.dy,
-            },
+            [hlKey]: { x: position.x + gesture.dx, y: position.y + gesture.dy },
           }));
         },
       });
-
       const isActive = true;
-
       return (
         <View
           key={`hl-${hlKey}`}
           style={[
             styles.highlight,
             {
-              left:            scaleX(position.x),
-              top:             scaleY(position.y),
-              width:           scaleX(235),
-              height:          scaleY(27),
-              borderColor:     isEditingHighlight ? 'red' : 'transparent',
+              left: scaleX(position.x),
+              top: scaleY(position.y),
+              width: scaleX(235),
+              height: scaleY(27),
+              borderColor: isEditingHighlight ? 'red' : 'transparent',
               backgroundColor: isActive ? 'yellow' : 'transparent',
-              opacity:         isActive ? 0.4 : 0.2,
+              opacity: isActive ? 0.4 : 0.2,
             },
           ]}
           {...(isEditingHighlight ? panResponder.panHandlers : {})}
@@ -3011,7 +2967,6 @@ const QuranViewer = () => {
     [highlightPositions, isEditingHighlight, activeHighlights],
   );
 
-  // ── Back button ────────────────────────────
   const renderBackButton = useCallback(
     (currentPageId) =>
       prevPageId && currentPageId !== prevPageId ? (
@@ -3028,20 +2983,18 @@ const QuranViewer = () => {
     [prevPageId, scrollToPage],
   );
 
-  // ── Render FlatList item ───────────────────
   const renderItem = useCallback(
     ({ item }) => {
-      const pageId        = item.id;
-      const entry         = pageData.find((p) => p.id === item.id) || {};
-      const boxList       = entry.boxes      || [];
+      const pageId = item.id;
+      const entry = pageData.find((p) => p.id === item.id) || {};
+      const boxList = entry.boxes || [];
       const highlightList = entry.highlights || [];
-
       return (
         <PageItem
           item={item}
-          renderBoxes={()      => boxList.map((box) => renderDraggableBox(pageId, box))}
-          renderHighlights={()  => highlightList.map((hl)  => renderHighlightLine(pageId, hl))}
-          renderBackButton={()  => renderBackButton(pageId)}
+          renderBoxes={() => boxList.map((box) => renderDraggableBox(pageId, box))}
+          renderHighlights={() => highlightList.map((hl) => renderHighlightLine(pageId, hl))}
+          renderBackButton={() => renderBackButton(pageId)}
         />
       );
     },
@@ -3049,21 +3002,18 @@ const QuranViewer = () => {
   );
 
   // ─────────────────────────────────────────────
-  // Render
-  // ─────────────────────────────────────────────
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      {/* Background */}
       <LinearGradient
         colors={['#ffffff', '#5df76595', '#B8F3CD']}
         style={StyleSheet.absoluteFill}
         start={{ x: 0.3, y: 0 }}
         end={{ x: 0.7, y: 1 }}
       />
-      <View style={[styles.glow, { top: -60,   right: -60, backgroundColor: 'rgba(78,230,91,0.27)'   }]} />
-      <View style={[styles.glow, { bottom: 100, left:  -60, backgroundColor: 'rgba(212,210,206,0.47)' }]} />
+      <View style={[styles.glow, { top: -60, right: -60, backgroundColor: 'rgba(78,230,91,0.27)' }]} />
+      <View style={[styles.glow, { bottom: 100, left: -60, backgroundColor: 'rgba(212,210,206,0.47)' }]} />
 
-      {/* Search bar — fixed, outside zoom wrapper */}
+      {/* Search — always fixed */}
       <View style={styles.searchContainer}>
         <View style={styles.searchRow}>
           <TextInput
@@ -3085,18 +3035,7 @@ const QuranViewer = () => {
         </View>
       </View>
 
-      {/*
-        ┌─────────────────────────────────────────────────┐
-        │  GestureDetector owns ALL touch handling:       │
-        │    • single-finger pan  → FlatList scroll       │
-        │    • pinch              → zoom Animated.View    │
-        │    • single-finger pan (zoomed) → pan view      │
-        │    • double-tap         → reset zoom            │
-        │                                                 │
-        │  FlatList is scrollEnabled={false} so we        │
-        │  fully control scrolling via scrollToOffset.    │
-        └─────────────────────────────────────────────────┘
-      */}
+      
       <View style={styles.listWrapper}>
         <GestureDetector gesture={combinedGesture}>
           <Animated.View style={[styles.animatedWrapper, animatedStyle]}>
@@ -3110,7 +3049,7 @@ const QuranViewer = () => {
                 offset: ITEM_HEIGHT * index,
                 index,
               })}
-              scrollEnabled={false}      // ← we drive scrolling manually
+              scrollEnabled={scrollEnabled}
               initialNumToRender={3}
               maxToRenderPerBatch={3}
               windowSize={5}
@@ -3119,10 +3058,6 @@ const QuranViewer = () => {
               viewabilityConfig={{ itemVisiblePercentThreshold: 60 }}
               onViewableItemsChanged={onViewableItemsChanged}
               onMomentumScrollEnd={handleScrollEnd}
-              onScroll={(e) => {
-                scrollOffsetJS.current = e.nativeEvent.contentOffset.y;
-                scrollOffset.value     = e.nativeEvent.contentOffset.y;
-              }}
             />
           </Animated.View>
         </GestureDetector>
@@ -3131,9 +3066,6 @@ const QuranViewer = () => {
   );
 };
 
-// ─────────────────────────────────────────────
-// Styles
-// ─────────────────────────────────────────────
 const styles = StyleSheet.create({
   listWrapper: {
     flex: 1,
