@@ -2580,6 +2580,7 @@ const images = [
 ]
 
 
+
 // ─────────────────────────────────────────────
 const PageItem = React.memo(
   ({ item, renderBoxes, renderHighlights, renderBackButton }) => (
@@ -3035,7 +3036,21 @@ const QuranViewer = () => {
         </View>
       </View>
 
-      
+      {/*
+        KEY ARCHITECTURE:
+        ┌──────────────────────────────────────────┐
+        │  When NOT zoomed (scale ≈ 1):            │
+        │    FlatList scrollEnabled = true          │
+        │    → Native smooth scroll ✅              │
+        │    Pan gesture does NOT activate          │
+        │    (activeOffset threshold too high)      │
+        │                                          │
+        │  When ZOOMED (scale > 1):                │
+        │    FlatList scrollEnabled = false         │
+        │    → Pan gesture handles movement         │
+        │    → withDecay for smooth deceleration   │
+        └──────────────────────────────────────────┘
+      */}
       <View style={styles.listWrapper}>
         <GestureDetector gesture={combinedGesture}>
           <Animated.View style={[styles.animatedWrapper, animatedStyle]}>
