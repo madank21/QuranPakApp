@@ -2928,45 +2928,50 @@ const QuranViewer = () => {
 
   const renderHighlightLine = useCallback(
     (pageId, hl) => {
-      const hlKey = hl.id;
+      const hlKey    = hl.id;
       const position = highlightPositions[hlKey] || { x: 30, y: 150 };
+
       const panResponder = PanResponder.create({
         onStartShouldSetPanResponder: () => isEditingHighlight,
         onPanResponderMove: (_, gesture) => {
           setHighlightPositions((prev) => ({
             ...prev,
-            [hlKey]: { x: position.x + gesture.dx, y: position.y + gesture.dy },
+            [hlKey]: {
+              x: position.x + gesture.dx,
+              y: position.y + gesture.dy,
+            },
           }));
         },
       });
-      const isActive = true;
+
+      const isActive =
+        activeHighlights.pageId === pageId &&
+        activeHighlights.highlightIds.includes(hl.id);
+
+      if (!isEditingHighlight && !isActive) return null;
+
       return (
         <View
           key={`hl-${hlKey}`}
           style={[
             styles.highlight,
             {
-              left: scaleX(position.x),
-              top: scaleY(position.y),
-              width: scaleX(235),
-              height: scaleY(27),
-              borderColor: isEditingHighlight ? 'red' : 'transparent',
+              left:            scaleX(position.x),
+              top:             scaleY(position.y),
+              width:           scaleX(235),
+              height:          scaleY(27),
+              borderColor:     isEditingHighlight ? 'red' : 'transparent',
               backgroundColor: isActive ? 'yellow' : 'transparent',
-              opacity: isActive ? 0.4 : 0.2,
+              opacity:         isActive ? 0.4 : 0.2,
             },
           ]}
           {...(isEditingHighlight ? panResponder.panHandlers : {})}
-        >
-          {!isEditingHighlight && (
-            <Text style={{ color: 'red', fontWeight: 'bold', fontSize: 15, alignSelf: 'center' }}>
-              {hl.id}
-            </Text>
-          )}
-        </View>
+        />
       );
     },
     [highlightPositions, isEditingHighlight, activeHighlights],
   );
+
 
   const renderBackButton = useCallback(
     (currentPageId) =>
